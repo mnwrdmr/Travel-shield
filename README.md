@@ -31,7 +31,7 @@ Lokasyon ve Mix (Optimizasyon / Orkestratör Karışımı)
 ## Hedef Kitle
 
 - İş Arayan Kullanıcılar
-- Yeni bir şehire taşınmak isteyen ama şehir ile ilgili hiç bilgisi olmayan kullanıcılar
+- Yeni bir şehre taşınmak isteyen ama şehir ile ilgili hiç bilgisi olmayan kullanıcılar
 - 
 -  
 -  
