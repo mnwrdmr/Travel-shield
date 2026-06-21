@@ -8,10 +8,10 @@ Lokasyon ve Mix (Optimizasyon / Orkestratör Karışımı)
 
 ## Takım Elemanları
 
-- Abdülaziz Kıran: Product Owner
-- Münevver Demir: Scrum Master
-- Yasin Ünsal: Team Member/Developer
-- Umut Can Karaman: Team Member/Developer
+- Münevver Demir: Scrum Master/Team Member/Developer
+- Abdülaziz Kıran: - Product Owner/Team Member/Developer
+- Yasin Ünsal: - Product Owner/Team Member/Developer
+- Umut Can Karaman: Product Owner/Team Member/Developer
 
 ## Ürün İsmi
 
