@@ -37,6 +37,7 @@ Travel-shield
 -  
 
 ## Product Backlog URL
+https://trello.com/b/WQPd2syn/takim-127
 
 
 
