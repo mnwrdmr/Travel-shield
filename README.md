@@ -1,25 +1,25 @@
 
 # **Takım İsmi**
 
-Takım Lomix
+Takım Travel-shield
 
 # Ürün İle İlgili Bilgiler
-Lokasyon ve Mix (Optimizasyon / Orkestratör Karışımı) 
+Travel-shield
 
 ## Takım Elemanları
 
 - Münevver Demir: Scrum Master/Team Member/Developer
-- Yasin Ünsal: - Product Owner/Team Member/Developer
-- Abdülaziz Kıran: - Team Member/Developer
+- Abdülaziz Kıran: - Product Owner/Team Member/Developer
+- Yasin Ünsal: - Team Member/Developer
 - Umut Can Karaman: Team Member/Developer
 
 ## Ürün İsmi
 
---Lomix--
+--Travel-shield--
 
 ## Ürün Açıklaması
 
-- Lomix uygulamamız iş ilanındaki konuma göre kira, yaşam masraflarını çıkaran, en optimize ulaşım rotasını hesaplayan AI asistanıdır.
+- Düşük maliyetli havayolları ve bölgesel tren operatörlerinin (Ryanair, Trenitalia vb.) karmaşık kurallar ve dijital tuzaklar üzerinden kestiği ağır operasyonel cezalara karşı bütçeli gezginleri koruyan yapay zeka ajanlı bir seyahat asistanı.
 
 ## Ürün Özellikleri
 
@@ -30,9 +30,9 @@ Lokasyon ve Mix (Optimizasyon / Orkestratör Karışımı)
 
 ## Hedef Kitle
 
-- İş Arayan Kullanıcılar
-- Yeni bir şehre taşınmak isteyen ama şehir ile ilgili hiç bilgisi olmayan kullanıcılar
-- 
+- Gen Z ve Millennial Bütçeli Gezginler  
+- Interrail Kullanıcıları
+- Çoklu Modlu (Multimodal) Seyahat Edenler
 -  
 -  
 
