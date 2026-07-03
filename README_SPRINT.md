@@ -63,6 +63,10 @@ Daily Scrum toplantılarında daha hızlı aksiyon alınması için WhatApp üze
 <img width="1280" height="831" alt="product_ss_2" src="https://github.com/user-attachments/assets/8fccbe83-af64-41dc-88f2-6abc6134ae4e" />
 <img width="373" height="749" alt="product_ss_3" src="https://github.com/user-attachments/assets/7ea1e396-0580-4a47-a258-4154e9a116ba" />
 <img width="375" height="474" alt="product_ss_4" src="https://github.com/user-attachments/assets/909d81fb-bf8e-4a43-af45-a9dffde134cb" />
+<img width="353" height="753" alt="Ekran Resmi 2026-07-04 00 56 14" src="https://github.com/user-attachments/assets/3d05a301-32cf-4429-8e7a-5c980c7e190d" />
+<img width="355" height="263" alt="Ekran Resmi 2026-07-04 00 56 26" src="https://github.com/user-attachments/assets/22ff4cee-c2b6-4a04-85cc-8d54990a824b" />
+
+
 
 Sprint 1 ekran görüntüleri çıktısı, uçtan uca çalışan fütüristik bir **Frontend Prototipidir**. Kullanıcı ana sayfadan giriş yapar, `/analyze` rotasında biletini simüle eder, AI analiz animasyonunu deneyimler ve ardından seyahat risklerini gösteren `/dashboard` paneline sorunsuz yönlendirilir.
 
