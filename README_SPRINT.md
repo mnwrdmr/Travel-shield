@@ -61,8 +61,6 @@ Daily Scrum toplantılarında daha hızlı aksiyon alınması için WhatApp üze
 <img width="1347" height="7482" alt="Travel Nasil Gali" src="https://github.com/user-attachments/assets/6613ecb5-4dab-43f0-96c3-6ebd68965b41" />
 <img width="1280" height="831" alt="product_ss_1" src="https://github.com/user-attachments/assets/5a3630c8-3c87-4914-a467-1f6de9d41ade" />
 <img width="1280" height="831" alt="product_ss_2" src="https://github.com/user-attachments/assets/8fccbe83-af64-41dc-88f2-6abc6134ae4e" />
-<img width="373" height="749" alt="product_ss_3" src="https://github.com/user-attachments/assets/7ea1e396-0580-4a47-a258-4154e9a116ba" />
-<img width="375" height="474" alt="product_ss_4" src="https://github.com/user-attachments/assets/909d81fb-bf8e-4a43-af45-a9dffde134cb" />
 <img width="353" height="753" alt="Ekran Resmi 2026-07-04 00 56 14" src="https://github.com/user-attachments/assets/3d05a301-32cf-4429-8e7a-5c980c7e190d" />
 <img width="355" height="263" alt="Ekran Resmi 2026-07-04 00 56 26" src="https://github.com/user-attachments/assets/22ff4cee-c2b6-4a04-85cc-8d54990a824b" />
 
