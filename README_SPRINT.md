@@ -1,3 +1,12 @@
+## Takım İsmi
+Takım Travel-shield
+
+## Takım Rolleri
+
+Münevver Demir: Scrum Master/Team Member/Developer
+Abdülaziz Kıran: - Product Owner/Team Member/Developer
+Yasin Ünsal: - Team Member/Developer
+Umut Can Karaman: Team Member/Developer
 
 ## Ürün İsmi
 
@@ -22,6 +31,7 @@
 - Seyahat planlamayı seven tüm kullanıcılar 
 
 ## Product Backlog URL
+
 https://trello.com/b/WQPd2syn/takim-127
 
 ---
@@ -29,7 +39,7 @@ https://trello.com/b/WQPd2syn/takim-127
 # Sprint 1: 📋 Scrum ve Proje Yönetimi Raporu
 
 ---
-### A. Backlog Düzeni & Story seçimleri & Görev Dağılımı (Efor: 21 SP)
+### A. Backlog Dağıtma Mantığı : Backlog Düzeni & Story seçimleri & Görev Dağılımı (Efor: 21 SP)
 
 Backlog'umuz öncelikli story'lere göre düzenlenmiştir. Sprint başına tahmin edilen puan sayısını geçmeyecek şekilde sıradan seçimler yapılmaktadır. Story başına çıkan tahmin puanı, toplam puanın yarısından az tutulmuştur. Story'ler yapılacak işlere (task'lere) bölünmüştür. 
 Trello Board'da gözüken turuncu item'lar öncelikli yapılacak görevleri (task) gösterirken, mor item'ler turuncu adımlar tamamlandıktan sonra ki adımları, sarı item'ler proje yönetimi için ana adımları temsil etmektedir.  
