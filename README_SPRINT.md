@@ -3,10 +3,10 @@ Takım Travel-shield
 
 ## Takım Rolleri
 
-Münevver Demir: Scrum Master/Team Member/Developer
-Abdülaziz Kıran: - Product Owner/Team Member/Developer
-Yasin Ünsal: - Team Member/Developer
-Umut Can Karaman: Team Member/Developer
+Münevver Demir: Scrum Master/Team Member/Developer    
+Abdülaziz Kıran: - Product Owner/Team Member/Developer       
+Yasin Ünsal: - Team Member/Developer      
+Umut Can Karaman: Team Member/Developer      
 
 ## Ürün İsmi
 
