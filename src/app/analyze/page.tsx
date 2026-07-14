@@ -1,19 +1,19 @@
+// ─────────────────────────────────────────────
+// app/analyze/page.tsx
+// Route: /analyze  (TS-103 + TS-104 — Yasin)
+// Server wrapper: metadata burada, etkileşimli
+// form AnalyzeForm client bileşeninde.
+// ─────────────────────────────────────────────
+
 import type { Metadata } from "next";
+import AnalyzeForm from "./AnalyzeForm";
 
 export const metadata: Metadata = {
   title: "Bilet Analizi | Travel Shield",
-  description: "Bilet analizi ve risk tespiti sayfası.",
+  description:
+    "Rezervasyonunu yapıştır veya seyahat bilgilerini gir; yapay zeka gizli ücret risklerini tarasın.",
 };
 
 export default function AnalyzePage() {
-  return (
-    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 flex flex-col items-center justify-center min-h-[50dvh] text-center">
-      <h1 className="text-2xl font-bold text-[var(--color-foreground)] mb-2">
-        Travel Shield - Analiz Sayfası
-      </h1>
-      <p className="text-[var(--color-foreground)]/60 text-sm">
-        (Person Y Çalışma Alanı)
-      </p>
-    </main>
-  );
+  return <AnalyzeForm />;
 }
