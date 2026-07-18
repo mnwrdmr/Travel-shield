@@ -1,3 +1,5 @@
+# Sprint 1
+---
 ## Takım İsmi
 Takım Travel-shield
 
@@ -140,7 +142,7 @@ https://trello.com/b/WQPd2syn/takim-127
 
 ---
 
-# Sprint 1: 📋 Scrum ve Proje Yönetimi Raporu
+# Sprint 2: 📋 Scrum ve Proje Yönetimi Raporu
 
 ---
 ### A. Backlog Dağıtma Mantığı : Backlog Düzeni & Story seçimleri & Görev Dağılımı (Efor: 21 SP)
@@ -161,10 +163,10 @@ Süreç içerisinde git merge çakışmalarını (conflict) sıfıra indirmek ad
 | **TS2-07** | NULL Analiz Sonucu için Resilient Empty State Ekranı Yapımı                                   | **Münevver**  | 4 SP      | `src/app/dashboard/page.tsx` |
 | **TS2-08** | Bütünleme sınavı haftasında olması nedeniyle önümüzdeki hafta görev dağılımı dengelenecektir. | **Umut Can**  | -         | 
 
-### B. Daily Scrum Notları:
+### B. Daily Scrum Notları- Sprint 2:
 Daily Scrum toplantılarında daha hızlı aksiyon alınması için WhatApp üzerinden ilerlenmiş, ekip üyelerinin müsait olduğu günlerde Slack üzerinden toplantı yapılmasına karar verilmiştir. Daily Scrum toplantısı örneği jpeg veya word olarak Readme'de tarafımızdan paylaşılmaktadır:
 [DailyScrumMeetingNotesSprint2.docx](ProjectManagment/Sprint2Documents/DailyScrumMeetingNotesSprint2.docx)
-### C. Sprint Board Updates: Ekran görüntüleri
+### C. Sprint 2 Board Updates: Ekran görüntüleri
 
 <img width="1512" height="982" alt="backlog_1" src="https://github.com/user-attachments/assets/537ba258-d356-4719-ab7e-59763eee9550" />
 <img width="1512" height="982" alt="backlog_2" src="https://github.com/user-attachments/assets/57961078-cea4-4d51-9b18-37244c2c043a" />
