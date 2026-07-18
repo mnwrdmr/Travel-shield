@@ -166,16 +166,16 @@ Daily Scrum toplantılarında daha hızlı aksiyon alınması için WhatApp üze
 [DailyScrumMeetingNotesSprint2.docx](ProjectManagment/Sprint2Documents/DailyScrumMeetingNotesSprint2.docx)
 ### C. Sprint Board Updates: Ekran görüntüleri
 
-![backlog_1.png](../../../Desktop/Bootcamp-2026-YZTA/ProjectManagment/Sprint2Documents/backlog_1.png)
-![backlog_2.png](../../../Desktop/Bootcamp-2026-YZTA/ProjectManagment/Sprint2Documents/backlog_2.png)
-![backlog_3.png](../../../Desktop/Bootcamp-2026-YZTA/ProjectManagment/Sprint2Documents/backlog_3.png)
-![backlog_4.png](../../../Desktop/Bootcamp-2026-YZTA/ProjectManagment/Sprint2Documents/backlog_4.png)
-![backlog_5.png](../../../Desktop/Bootcamp-2026-YZTA/ProjectManagment/Sprint2Documents/backlog_5.png)
-![backlog_6.png](../../../Desktop/Bootcamp-2026-YZTA/ProjectManagment/Sprint2Documents/backlog_6.png)
+<img width="1512" height="982" alt="backlog_1" src="https://github.com/user-attachments/assets/537ba258-d356-4719-ab7e-59763eee9550" />
+<img width="1512" height="982" alt="backlog_2" src="https://github.com/user-attachments/assets/57961078-cea4-4d51-9b18-37244c2c043a" />
+<img width="1512" height="982" alt="backlog_3" src="https://github.com/user-attachments/assets/ca105656-881f-4c5c-9b51-268cc9d685ad" />
+<img width="1512" height="982" alt="backlog_4" src="https://github.com/user-attachments/assets/c866b7b1-c2c5-4c8d-b118-d6c41a30496e" />
+<img width="1512" height="982" alt="backlog_5" src="https://github.com/user-attachments/assets/c57d0be0-4327-4a58-babc-79312adf252d" />
+<img width="1512" height="982" alt="backlog_6" src="https://github.com/user-attachments/assets/32fe7700-d129-40c7-b832-8f6a407f937f" />
 
 ### D. Ürün Durumu: Ekran görüntüleri
 
-[product_ss_1.pdf](ProjectManagment/Sprint2Documents/product_ss_1.pdf)
+[product_ss_1.pdf](https://github.com/user-attachments/files/30153879/product_ss_1.pdf)
 ![product_ss_2.jpeg](ProjectManagment/Sprint2Documents/product_ss_2.jpeg)
 ![product_ss_3.png](ProjectManagment/Sprint2Documents/product_ss_3.png)
 
