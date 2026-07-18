@@ -70,7 +70,7 @@ export default function HeroSection() {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Button asChild variant="default" size="lg" className="w-full sm:w-auto text-base px-8 shadow-lg shadow-[var(--color-primary)]/25 hover:shadow-[var(--color-primary)]/40 transition-shadow duration-300">
             <Link href="/analyze" className="flex items-center gap-2">
-              Ücretsiz Bilet Analizi Yap
+              Ücretsiz Analiz Başlat
               <ArrowRight size={18} aria-hidden="true" />
             </Link>
           </Button>

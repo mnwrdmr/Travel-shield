@@ -3,6 +3,7 @@ import HeroSection from "@/components/landing/HeroSection";
 import ProblemGrid from "@/components/landing/ProblemGrid";
 import HowItWorks from "@/components/landing/HowItWorks";
 import FeaturesSection from "@/components/landing/FeaturesSection";
+import OmnichannelSection from "@/components/landing/OmnichannelSection";
 
 export const metadata: Metadata = {
   title: "Travel Shield — Havayolu Gizli Cezalarına Karşı Yapay Zeka Kalkanı",
@@ -56,7 +57,17 @@ export default function HomePage() {
         <div className="h-px bg-gradient-to-r from-transparent via-[var(--color-border)] to-transparent" />
       </div>
 
+      <OmnichannelSection />
+
+      <div
+        aria-hidden="true"
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
+      >
+        <div className="h-px bg-gradient-to-r from-transparent via-[var(--color-border)] to-transparent" />
+      </div>
+
       <FeaturesSection />
     </main>
   );
 }
+

@@ -7,9 +7,10 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
-  { label: "Nasıl Çalışır?", href: "#how-it-works" },
-  { label: "Özellikler", href: "#features" },
   { label: "Engellenen Tuzaklar", href: "#traps" },
+  { label: "Nasıl Çalışır?", href: "#how-it-works" },
+  { label: "Chatbot Koruması", href: "#omnichannel" },
+  { label: "Özellikler", href: "#features" },
 ];
 
 export default function Navbar() {
@@ -86,7 +87,7 @@ export default function Navbar() {
           {/* Desktop CTA */}
           <div className="hidden md:block">
             <Button asChild variant="default" size="sm">
-              <Link href="/analyze">Sistemi Başlat</Link>
+              <Link href="/analyze">Ücretsiz Analiz Başlat</Link>
             </Button>
           </div>
 
@@ -140,7 +141,7 @@ export default function Navbar() {
             <li className="mt-2 px-1">
               <Button asChild variant="default" size="md" className="w-full">
                 <Link href="/analyze" onClick={() => setMenuOpen(false)}>
-                  Sistemi Başlat
+                  Ücretsiz Analiz Başlat
                 </Link>
               </Button>
             </li>

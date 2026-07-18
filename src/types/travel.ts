@@ -85,3 +85,17 @@ export interface AnalysisResult {
   alternatives: AlternativeTransport[];
   fees: FeeLineItem[];
 }
+
+// ─── Sprint 2: Person A — Form input bridge type ───
+// Bridges Person Y's form to the AI simulation engine.
+// Person Y extracts these fields from the form and passes
+// them to runAiSimulation() in TravelContext.
+export interface RawFormInput {
+  airline: Operator;
+  transportType: TransportMode;
+  origin: string;
+  destination: string;
+  date: string; // YYYY-MM-DD
+  cabinBagIncluded: boolean;
+  pastedBookingText?: string; // Optional: paste mode
+}
