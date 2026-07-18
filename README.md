@@ -162,14 +162,22 @@ Süreç içerisinde git merge çakışmalarını (conflict) sıfıra indirmek ad
 | **TS2-08** | Bütünleme sınavı haftasında olması nedeniyle önümüzdeki hafta görev dağılımı dengelenecektir. | **Umut Can**  | -         | 
 
 ### B. Daily Scrum Notları:
-Daily Scrum toplantılarında daha hızlı aksiyon alınması için WhatApp üzerinden ilerlenmiş, ekip üyelerinin müsait olduğu günlerde Slack üzerinden toplantı yapılmasına karar verilmiştir. Daily Scrum toplantısı örneği jpeg veya word olarak Readme'de tarafımızdan paylaşılmaktadır: 
-[DailyScrumMeetingNotesSprint2.docx](../../../Desktop/Bootcamp-2026-YZTA/ProjectManagment/Sprint2Documents/DailyScrumMeetingNotesSprint2.docx)
+Daily Scrum toplantılarında daha hızlı aksiyon alınması için WhatApp üzerinden ilerlenmiş, ekip üyelerinin müsait olduğu günlerde Slack üzerinden toplantı yapılmasına karar verilmiştir. Daily Scrum toplantısı örneği jpeg veya word olarak Readme'de tarafımızdan paylaşılmaktadır:
+[DailyScrumMeetingNotesSprint2.docx](ProjectManagment/Sprint2Documents/DailyScrumMeetingNotesSprint2.docx)
 ### C. Sprint Board Updates: Ekran görüntüleri
 
+![backlog_1.png](../../../Desktop/Bootcamp-2026-YZTA/ProjectManagment/Sprint2Documents/backlog_1.png)
+![backlog_2.png](../../../Desktop/Bootcamp-2026-YZTA/ProjectManagment/Sprint2Documents/backlog_2.png)
+![backlog_3.png](../../../Desktop/Bootcamp-2026-YZTA/ProjectManagment/Sprint2Documents/backlog_3.png)
+![backlog_4.png](../../../Desktop/Bootcamp-2026-YZTA/ProjectManagment/Sprint2Documents/backlog_4.png)
+![backlog_5.png](../../../Desktop/Bootcamp-2026-YZTA/ProjectManagment/Sprint2Documents/backlog_5.png)
+![backlog_6.png](../../../Desktop/Bootcamp-2026-YZTA/ProjectManagment/Sprint2Documents/backlog_6.png)
 
 ### D. Ürün Durumu: Ekran görüntüleri
 
-
+[product_ss_1.pdf](ProjectManagment/Sprint2Documents/product_ss_1.pdf)
+![product_ss_2.jpeg](ProjectManagment/Sprint2Documents/product_ss_2.jpeg)
+![product_ss_3.png](ProjectManagment/Sprint2Documents/product_ss_3.png)
 
 Sprint 2 sonunda elde edilen ürün; kullanıcı girdilerine dinamik olarak tepki veren, durum yönetimli (stateful) ve çok kanallı (omnichannel) büyüme vizyonuna sahip üst segment bir frontend prototipidir. Sunucu ihtiyacı duymadan, istemci tarafında gelişmiş yapay zeka ajan tarama simülasyonunu başarıyla oluşturur.
 
