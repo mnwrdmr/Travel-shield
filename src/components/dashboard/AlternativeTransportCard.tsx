@@ -1,7 +1,8 @@
-// ─────────────────────────────────────────────
-// components/dashboard/AlternativeTransportCard.tsx
-// Shows AI-suggested cheaper/better alternatives.
-// ─────────────────────────────────────────────
+"use client";
+// ─────────────────────────────────────────────────────────────
+// src/components/dashboard/AlternativeTransportCard.tsx
+// SPRINT 2: Dark tema. Props API değişmedi ✅
+// ─────────────────────────────────────────────────────────────
 
 import { Plane, Train, Bus, ArrowRight, Tag } from "lucide-react";
 import { getOperatorMeta } from "@/lib/operator-meta";
@@ -14,10 +15,7 @@ interface AlternativeTransportCardProps {
 const MODE_ICON = { FLIGHT: Plane, TRAIN: Train, BUS: Bus };
 
 function formatShortTime(iso: string) {
-  return new Date(iso).toLocaleTimeString("en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return new Date(iso).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
 }
 
 function AlternativeItem({ alt }: { alt: AlternativeTransport }) {
@@ -25,32 +23,29 @@ function AlternativeItem({ alt }: { alt: AlternativeTransport }) {
   const ModeIcon = MODE_ICON[alt.mode];
 
   return (
-    <div className="flex items-center gap-4 rounded-xl border border-slate-100 bg-slate-50 p-4 hover:border-slate-200 hover:bg-white transition-colors">
-      {/* Operator */}
+    <div className="flex items-center gap-4 rounded-xl border border-slate-800 bg-slate-800/50 p-4 hover:border-slate-700 hover:bg-slate-800 transition-colors">
       <div
         className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-lg"
-        style={{ backgroundColor: meta.bgColor }}
+        style={{ backgroundColor: `${meta.accentColor}22` }}
       >
         {meta.emoji}
       </div>
 
-      {/* Route + time */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-800">
+        <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-200">
           <span>{alt.origin}</span>
-          <ArrowRight size={13} className="text-slate-400" />
+          <ArrowRight size={13} className="text-slate-500" />
           <span>{alt.destination}</span>
-          <ModeIcon size={12} className="ml-1 text-slate-400" />
+          <ModeIcon size={12} className="ml-1 text-slate-500" />
         </div>
-        <p className="mt-0.5 text-xs text-slate-400">
+        <p className="mt-0.5 text-xs text-slate-500">
           {meta.displayName} · {formatShortTime(alt.departureTime)}
         </p>
-        {/* Tags */}
         <div className="mt-1.5 flex flex-wrap gap-1">
           {alt.tags.map((tag) => (
             <span
               key={tag}
-              className="flex items-center gap-0.5 rounded-full bg-white border border-slate-200 px-2 py-0.5 text-[10px] font-medium text-slate-500"
+              className="flex items-center gap-0.5 rounded-full bg-slate-900 border border-slate-700 px-2 py-0.5 text-[10px] font-medium text-slate-400"
             >
               <Tag size={8} />
               {tag}
@@ -59,22 +54,17 @@ function AlternativeItem({ alt }: { alt: AlternativeTransport }) {
         </div>
       </div>
 
-      {/* Price + savings */}
       <div className="shrink-0 text-right">
-        <p className="font-mono text-lg font-black text-slate-900">
-          €{alt.price}
-        </p>
-        <p className="text-xs font-semibold text-emerald-600">
-          save €{alt.savings}
-        </p>
+        <p className="font-mono text-lg font-black text-white">€{alt.price}</p>
+        <p className="text-xs font-semibold text-emerald-400">€{alt.savings} tasarruf</p>
         {alt.bookingUrl && (
           <a
             href={alt.bookingUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-1.5 block text-[11px] font-medium text-blue-500 underline underline-offset-2"
+            className="mt-1.5 block text-[11px] font-medium text-emerald-500 underline underline-offset-2"
           >
-            Book →
+            Rezervasyon →
           </a>
         )}
       </div>
@@ -82,29 +72,23 @@ function AlternativeItem({ alt }: { alt: AlternativeTransport }) {
   );
 }
 
-export function AlternativeTransportCard({
-  alternatives,
-}: AlternativeTransportCardProps) {
+export function AlternativeTransportCard({ alternatives }: AlternativeTransportCardProps) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <div className="border-b border-slate-100 px-6 py-4">
-        <h2 className="text-sm font-semibold text-slate-900">
-          Smarter Alternatives
-        </h2>
-        <p className="mt-0.5 text-xs text-slate-400">
-          AI found cheaper options for your route
+    <div className="rounded-2xl border border-slate-800 bg-slate-900 shadow-xl">
+      <div className="border-b border-slate-800 px-6 py-4">
+        <h2 className="text-sm font-semibold text-white">Daha Akıllı Alternatifler</h2>
+        <p className="mt-0.5 text-xs text-slate-500">
+          Yapay zeka rotanız için daha uygun seçenekler buldu
         </p>
       </div>
 
       <div className="space-y-3 p-6">
         {alternatives.length === 0 ? (
-          <p className="py-4 text-center text-sm text-slate-400">
-            No alternatives found for this route.
+          <p className="py-4 text-center text-sm text-slate-500">
+            Bu rota için alternatif bulunamadı.
           </p>
         ) : (
-          alternatives.map((alt) => (
-            <AlternativeItem key={alt.id} alt={alt} />
-          ))
+          alternatives.map((alt) => <AlternativeItem key={alt.id} alt={alt} />)
         )}
       </div>
     </div>

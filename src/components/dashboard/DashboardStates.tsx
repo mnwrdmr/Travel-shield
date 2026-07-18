@@ -1,20 +1,26 @@
-// ─────────────────────────────────────────────
-// components/dashboard/DashboardStates.tsx
-// Yüklenme iskeleti + boş durum — Türkçe
-// ─────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// src/components/dashboard/DashboardStates.tsx
+// SPRINT 2 DEĞIŞIKLIKLERI:
+//   ✅ DashboardEmpty → onNavigate callback prop aldı
+//      (router.push dışarıdan enjekte edilir, component saf kalır)
+//   ✅ Dark premium tema: slate-950 / slate-800 / emerald aksan
+//   ✅ Skeleton renkleri dark background'a uyarlandı
+// ─────────────────────────────────────────────────────────────
 
-import { Search } from "lucide-react";
+import { ScanLine } from "lucide-react";
 
+// ── Skeleton pulse ────────────────────────────────────────────
 function Pulse({ className }: { className: string }) {
   return (
-    <div className={`animate-pulse rounded-lg bg-slate-200 ${className}`} />
+    <div className={`animate-pulse rounded-lg bg-slate-800 ${className}`} />
   );
 }
 
 export function DashboardSkeleton() {
   return (
-    <div className="space-y-6">
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+    <div className="space-y-5">
+      {/* Summary */}
+      <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 space-y-4">
         <div className="flex items-center gap-3">
           <Pulse className="h-11 w-11 rounded-xl" />
           <div className="space-y-2">
@@ -23,13 +29,15 @@ export function DashboardSkeleton() {
           </div>
         </div>
         <div className="flex justify-between gap-4 pt-2">
-          <Pulse className="h-10 w-20" />
-          <Pulse className="h-8 w-16 rounded-full" />
-          <Pulse className="h-10 w-20" />
+          <Pulse className="h-10 w-24" />
+          <Pulse className="h-8 w-10 rounded-full" />
+          <Pulse className="h-10 w-24" />
         </div>
       </div>
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-3">
-        <Pulse className="h-4 w-28" />
+
+      {/* Risks */}
+      <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 space-y-3">
+        <Pulse className="h-4 w-32" />
         {[1, 2, 3].map((i) => (
           <div key={i} className="flex gap-3">
             <Pulse className="h-5 w-5 rounded-full shrink-0" />
@@ -40,44 +48,70 @@ export function DashboardSkeleton() {
           </div>
         ))}
       </div>
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-3">
-          <Pulse className="h-4 w-24" />
-          <Pulse className="h-16 w-32" />
-          {[1, 2, 3].map((i) => (
-            <Pulse key={i} className="h-8 w-full" />
-          ))}
+
+      {/* Two col */}
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+        {[1, 2].map((i) => (
+          <div key={i} className="rounded-2xl border border-slate-800 bg-slate-900 p-6 space-y-3">
+            <Pulse className="h-4 w-24" />
+            <Pulse className="h-14 w-32" />
+            {[1, 2, 3].map((j) => <Pulse key={j} className="h-8 w-full" />)}
+          </div>
+        ))}
+      </div>
+
+      {/* Fee breakdown */}
+      <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 space-y-3">
+        <Pulse className="h-4 w-28" />
+        <div className="grid grid-cols-2 gap-3">
+          <Pulse className="h-16 rounded-xl" />
+          <Pulse className="h-16 rounded-xl" />
         </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-3">
-          <Pulse className="h-4 w-24" />
-          {[1, 2].map((i) => (
-            <Pulse key={i} className="h-20 w-full rounded-xl" />
-          ))}
-        </div>
+        {[1, 2, 3, 4].map((i) => <Pulse key={i} className="h-10 w-full" />)}
       </div>
     </div>
   );
 }
 
-export function DashboardEmpty() {
+// ── Premium Empty State ───────────────────────────────────────
+interface DashboardEmptyProps {
+  onNavigate: () => void;   // router.push("/analyze") dışarıdan gelir
+}
+
+export function DashboardEmpty({ onNavigate }: DashboardEmptyProps) {
   return (
-    <div className="flex min-h-[60vh] flex-col items-center justify-center text-center px-6">
-      <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100">
-        <Search size={28} className="text-slate-400" />
+    <div className="flex min-h-[70vh] flex-col items-center justify-center text-center px-6">
+      {/* İkon */}
+      <div className="relative mb-6">
+        <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-slate-900 border border-slate-800">
+          <ScanLine size={36} className="text-slate-600" />
+        </div>
+        {/* Pulse ring */}
+        <span className="absolute inset-0 rounded-2xl animate-ping bg-slate-700 opacity-20" />
       </div>
-      <h2 className="text-lg font-semibold text-slate-800">
-        Analiz bulunamadı
+
+      <h2 className="text-xl font-bold text-white">
+        Analiz edilmiş bilet bulunamadı
       </h2>
-      <p className="mt-2 max-w-xs text-sm text-slate-400 leading-relaxed">
-        Seyahat analizini başlatmak için rezervasyon onayınızı WhatsApp botuna gönderin.
-        Genellikle 30 saniyeden kısa sürer.
+
+      <p className="mt-3 max-w-sm text-sm text-slate-400 leading-relaxed">
+        Seyahat belgelerinizi yükleyin veya AI Agent giriş panelini kullanarak
+        biletinizi taramaya başlayın.
       </p>
-      <a
-        href="https://wa.me/YOUR_NUMBER"
-        className="mt-6 inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-700 transition-colors"
+
+      {/* CTA — Person A'nın Button bileşenini kullanıyor */}
+      <button
+        onClick={onNavigate}
+        className="mt-8 inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-6 py-3 text-sm font-semibold text-slate-950 hover:bg-emerald-400 active:scale-95 transition-all"
       >
-        WhatsApp Botunu Aç
-      </a>
+        <ScanLine size={16} />
+        AI Agent Panelini Aç
+      </button>
+
+      {/* Alt not */}
+      <p className="mt-4 text-xs text-slate-600">
+        Ya da Telegram botumuz üzerinden bilet PDF'inizi iletin
+      </p>
     </div>
   );
 }

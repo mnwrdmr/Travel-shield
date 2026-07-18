@@ -1,126 +1,131 @@
-// ─────────────────────────────────────────────
-// app/dashboard/page.tsx
-// Route: /dashboard
-//
-// FILE PLACEMENT NOTE (avoid merge conflicts):
-//   Person A (landing page) owns:  src/app/(marketing)/
-//   Person B (backend/API) owns:   src/app/api/
-//   Person C (YOU) owns:           src/app/dashboard/
-//                                  src/components/dashboard/
-//                                  src/types/travel.ts
-//                                  src/lib/mock-analysis.ts
-//                                  src/lib/operator-meta.ts
-//
-// To use real data later: swap getAnalysis() in lib/mock-analysis.ts.
-// No changes needed in this file.
-// ─────────────────────────────────────────────
+"use client";
 
-import { Suspense } from "react";
-import { getAnalysis, MOCK_ANALYSIS } from "@/lib/mock-analysis";
-import { TravelSummaryCard } from "@/components/dashboard/TravelSummaryCard";
-import { RiskAlertCard } from "@/components/dashboard/RiskAlertCard";
-import { SavingsCard } from "@/components/dashboard/SavingsCard";
-import { AlternativeTransportCard } from "@/components/dashboard/AlternativeTransportCard";
-import { FeeBreakdownCard } from "@/components/dashboard/FeeBreakdownCard";
-import {
-  DashboardSkeleton,
-  DashboardEmpty,
-} from "@/components/dashboard/DashboardStates";
+// ─────────────────────────────────────────────────────────────
+// src/app/dashboard/page.tsx
+// SPRINT 2 — Person M exclusive work dock
+//
+// DEĞIŞIKLIKLER (Sprint 1 → Sprint 2):
+//   ❌ KALDIRILDI: getAnalysis(), MOCK_ANALYSIS, mock-analysis.ts importu
+//   ❌ KALDIRILDI: Suspense + async server component mimarisi
+//   ✅ EKLENDİ   : useTravel() context hook (Person A'nın TravelContext)
+//   ✅ EKLENDİ   : null guard → premium empty state
+//   ✅ EKLENDİ   : dark theme uyumu
+//   ✅ KORUNDU   : Tüm kart bileşenleri — prop API değişmedi
+// ─────────────────────────────────────────────────────────────
+
+import { useRouter } from "next/navigation";
 import { Shield, RefreshCw } from "lucide-react";
 
-// ─────────────────────────────────────────────
-// Inner async component (runs on server)
-// ─────────────────────────────────────────────
-async function DashboardContent({ id }: { id: string }) {
-  const analysis = await getAnalysis(id);
+import { useTravel } from "@/context/TravelContext";          // Person A
+import { TravelSummaryCard }       from "@/components/dashboard/TravelSummaryCard";
+import { RiskAlertCard }           from "@/components/dashboard/RiskAlertCard";
+import { SavingsCard }             from "@/components/dashboard/SavingsCard";
+import { AlternativeTransportCard } from "@/components/dashboard/AlternativeTransportCard";
+import { FeeBreakdownCard }         from "@/components/dashboard/FeeBreakdownCard";
+import { DashboardSkeleton, DashboardEmpty } from "@/components/dashboard/DashboardStates";
 
-  if (!analysis) return <DashboardEmpty />;
+// ─────────────────────────────────────────────────────────────
+// Main page
+// ─────────────────────────────────────────────────────────────
+export default function DashboardPage() {
+  const router = useRouter();
+  const { analysisResult, isLoading } = useTravel();          // ← Live context
 
-  const { segment, risks, savings, alternatives, fees, analyzedAt } = analysis;
+  // ── Loading state (Person Y'nin 2.6s animasyonu biterken) ──
+  if (isLoading) {
+    return (
+      <DashboardShell>
+        <DashboardSkeleton />
+      </DashboardShell>
+    );
+  }
 
+  // ── Empty state: kullanıcı direkt /dashboard'a geldi ───────
+  if (!analysisResult) {
+    return (
+      <DashboardShell>
+        <DashboardEmpty onNavigate={() => router.push("/analyze")} />
+      </DashboardShell>
+    );
+  }
+
+  // ── Dolu state: context'ten gelen canlı veri ───────────────
+  const { segment, risks, savings, alternatives, fees, analyzedAt } = analysisResult;
   const criticalCount = risks.filter((r) => r.level === "CRITICAL").length;
 
   return (
-    <div className="space-y-6">
-      {/* Page header */}
-      <div className="flex items-start justify-between gap-4 flex-wrap">
+    <DashboardShell>
+      {/* Sayfa başlığı */}
+      <div className="flex items-start justify-between gap-4 flex-wrap mb-6">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">Trip Analysis</h1>
+          <h1 className="text-xl font-bold text-white">Seyahat Analizi</h1>
           <p className="mt-0.5 text-xs text-slate-400">
-            Son tarama{" "}
-            {new Date(analyzedAt).toLocaleTimeString("en-GB", {
+            {new Date(analyzedAt).toLocaleTimeString("tr-TR", {
               hour: "2-digit",
               minute: "2-digit",
-            })}
+            })}{" "}
+            tarihinde tarandı
             {criticalCount > 0 && (
-              <span className="ml-2 font-semibold text-red-500">
-                · {criticalCount} kritik sorun{criticalCount > 1 ? "s" : ""}
+              <span className="ml-2 font-semibold text-red-400">
+                · {criticalCount} kritik sorun
               </span>
             )}
           </p>
         </div>
-        <button className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 shadow-sm hover:bg-slate-50 transition-colors">
+        <button
+          onClick={() => router.push("/analyze")}
+          className="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-xs font-medium text-slate-300 hover:bg-slate-700 transition-colors"
+        >
           <RefreshCw size={13} />
           Yeniden Tara
         </button>
       </div>
 
-      {/* Row 1: Full-width travel summary */}
-      <TravelSummaryCard segment={segment} />
+      {/* Kart grid — prop API Sprint 1 ile aynı ✅ */}
+      <div className="space-y-5">
+        <TravelSummaryCard segment={segment} />
+        <RiskAlertCard alerts={risks} />
 
-      {/* Row 2: Full-width risk alerts */}
-      <RiskAlertCard alerts={risks} />
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+          <SavingsCard savings={savings} />
+          <AlternativeTransportCard alternatives={alternatives} />
+        </div>
 
-      {/* Row 3: Savings + Alternatives side by side */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <SavingsCard savings={savings} />
-        <AlternativeTransportCard alternatives={alternatives} />
+        <FeeBreakdownCard fees={fees} />
       </div>
 
-      {/* Row 4: Full-width fee breakdown */}
-      <FeeBreakdownCard fees={fees} />
-
-      {/* Footer disclaimer */}
-      <p className="pb-8 text-center text-[11px] text-slate-300 leading-relaxed">
-        Travel Shield Yapay Zeka yalnızca bilgilendirme amaçlıdır. Seyahat öncesi rezervasyon kurallarını operatörünüzle doğrulayın.
+      {/* Yasal uyarı */}
+      <p className="mt-8 pb-6 text-center text-[11px] text-slate-600 leading-relaxed">
+        Travel Shield Yapay Zeka yalnızca bilgilendirme amaçlıdır.
+        Seyahat kurallarını her zaman operatörünüzle doğrulayın.
       </p>
-    </div>
+    </DashboardShell>
   );
 }
 
-// ─────────────────────────────────────────────
-// Page export (Next.js App Router)
-// ─────────────────────────────────────────────
-export default function DashboardPage() {
-  // In production, read ?id= from searchParams or session.
-  // For Sprint 1: hardcode the mock ID.
-  const ANALYSIS_ID = MOCK_ANALYSIS.id;
-
+// ─────────────────────────────────────────────────────────────
+// Shell: dark tema wrapper — Person A'nın global bg ile uyumlu
+// ─────────────────────────────────────────────────────────────
+function DashboardShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Top nav bar */}
-      <nav className="sticky top-0 z-10 border-b border-slate-200 bg-white/80 backdrop-blur-md">
+    <div className="min-h-screen bg-slate-950">
+      {/* Sticky nav */}
+      <nav className="sticky top-0 z-10 border-b border-slate-800 bg-slate-950/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-900">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/10">
               <Shield size={14} className="text-white" />
             </div>
-            <span className="text-sm font-bold text-slate-900">
-              Travel Shield
-            </span>
+            <span className="text-sm font-bold text-white">Travel Shield</span>
           </div>
-          <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
-            Protected
+          <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-400 border border-emerald-500/20">
+            Koruma Aktif
           </span>
         </div>
       </nav>
 
       {/* Content */}
-      <main className="mx-auto max-w-3xl px-4 py-6">
-        <Suspense fallback={<DashboardSkeleton />}>
-          <DashboardContent id={ANALYSIS_ID} />
-        </Suspense>
-      </main>
+      <main className="mx-auto max-w-3xl px-4 py-6">{children}</main>
     </div>
   );
 }
