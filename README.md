@@ -204,7 +204,7 @@ Onay Durumu: Ürün, Sprint 2 için belirlenen "Uçtan uca durum yönetimli (sta
   
 * **🔴 Ne Geliştirilebilir?:** 2.6 saniyelik animasyon senkronizasyonunu yakalamak için zaman aşımı (setTimeout) sürelerini kod içinde manuel eşitlemek zorunda kaldık. Bir sonraki geliştirme fazında merkezi bir animasyon zamanlayıcısı (event emitter) kurulabilir.
   
-* **🛠️ Aksiyon Planı:** WhatsApp/Telegram chatbotunun aktifleşip, yasal izinlerinlerin alınması üzerine hızlıca aksiyon alınması üzerine tartışıldı.Gerçek API onay süreçleri (Twilio/Telegram Bot API) için gereklilikler hazırlanacak ve backend entegrasyonuna başlanıp, ürünün son hali tamamlanacak.
+* **🛠️ Aksiyon Planı:** WhatsApp/Telegram chatbotunun aktifleşip, yasal izinlerinlerin alınması için hızlıca aksiyon alınması üzerine tartışıldı.Gerçek API onay süreçleri (Twilio/Telegram Bot API) için gereklilikler hazırlanacak ve backend entegrasyonuna başlanıp, ürünün son hali tamamlanacak.
 
 ---
 
