@@ -180,12 +180,17 @@ Daily Scrum toplantılarında daha hızlı aksiyon alınması için WhatApp üze
 [product_ss_1.pdf](https://github.com/user-attachments/files/30153879/product_ss_1.pdf)
 ![product_ss_2.jpeg](ProjectManagment/Sprint2Documents/product_ss_2.jpeg)
 ![product_ss_3.png](ProjectManagment/Sprint2Documents/product_ss_3.png)
+<img width="1280" height="831" alt="product_ss_4" src="https://github.com/user-attachments/assets/9f750eb8-4ec1-4414-8c50-7da0acf6354d" />
+<img width="1280" height="831" alt="product_ss_5" src="https://github.com/user-attachments/assets/4ce61f2d-fb68-4392-9f1d-38422f7788cb" />
+<img width="1280" height="831" alt="product_ss_6" src="https://github.com/user-attachments/assets/ad35f8e0-568c-49f6-9260-438bcbc92145" />
+
+
 
 Sprint 2 sonunda elde edilen ürün; kullanıcı girdilerine dinamik olarak tepki veren, durum yönetimli (stateful) ve çok kanallı (omnichannel) büyüme vizyonuna sahip üst segment bir frontend prototipidir. Sunucu ihtiyacı duymadan, istemci tarafında gelişmiş yapay zeka ajan tarama simülasyonunu başarıyla oluşturur.
 
 ### E. Sprint Review:
 
-Nihai MVP başarılı bir şekilde oluşturuldu. Ekip üyelerinin yaptığı demoda, havayolu firmasındaki bagaj seçeneğinin değiştirilmesiyle dashboard'daki "Risk Oranı" ve "Gizli Maliyet" grafiklerinin gerçek zamanlı olarak değiştiği gösterildi. WhatsApp/Telegram chatbotunun aktifleşip, yasal izinlerinlerin alınması üzerine tartışıldı.
+Nihai MVP başarılı bir şekilde oluşturuldu. Ekip üyelerinin yaptığı demoda, havayolu firmasındaki bagaj seçeneğinin değiştirilmesiyle dashboard'daki "Risk Oranı" ve "Gizli Maliyet" grafiklerinin gerçek zamanlı olarak değiştiği gösterildi. WhatsApp/Telegram chatbotunun aktifleşip, yasal izinlerinlerin alınması üzerine hızlıca aksiyon alınması üzerine tartışıldı.
 
 ### F. Sprint Retrospective:
 
