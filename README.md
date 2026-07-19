@@ -165,7 +165,8 @@ Süreç içerisinde git merge çakışmalarını (conflict) sıfıra indirmek ad
 
 ### B. Daily Scrum Notları- Sprint 2:
 Daily Scrum toplantılarında daha hızlı aksiyon alınması için WhatApp üzerinden ilerlenmiş, ekip üyelerinin müsait olduğu günlerde Slack üzerinden toplantı yapılmasına karar verilmiştir. Daily Scrum toplantısı örneği jpeg veya word olarak Readme'de tarafımızdan paylaşılmaktadır:
-[DailyScrumMeetingNotesSprint2.docx](ProjectManagment/Sprint2Documents/DailyScrumMeetingNotesSprint2.docx)
+[DailyScrumMeetingNotesSprint2.docx](https://github.com/user-attachments/files/30170553/DailyScrumMeetingNotesSprint2.docx)
+
 ### C. Sprint 2 Board Updates: Ekran görüntüleri
 
 <img width="1512" height="982" alt="backlog_1" src="https://github.com/user-attachments/assets/537ba258-d356-4719-ab7e-59763eee9550" />
