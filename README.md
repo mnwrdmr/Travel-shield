@@ -192,7 +192,11 @@ Sprint 2 sonunda elde edilen ürün; kullanıcı girdilerine dinamik olarak tepk
 
 ### E. Sprint Review:
 
-Nihai MVP başarılı bir şekilde oluşturuldu. Ekip üyelerinin yaptığı demoda, havayolu firmasındaki bagaj seçeneğinin değiştirilmesiyle dashboard'daki "Risk Oranı" ve "Gizli Maliyet" grafiklerinin gerçek zamanlı olarak değiştiği gösterildi. WhatsApp/Telegram chatbotunun aktifleşip, yasal izinlerinlerin alınması üzerine hızlıca aksiyon alınması üzerine tartışıldı.
+Neler Tamamlandı?: TravelContext hafıza katmanı kurularak /analyze formundan gelen dinamik girdilerin 2.6 saniyelik AI simülasyonu eşliğinde /dashboard risk paneline hatasız akışı sağlanmış; tüm sayfalar premium koyu tema baseline mimarisine eşitlenerek "Omnichannel Chatbot" vizyon kartları landing page'e başarıyla giydirilmiştir.
+
+Alınan Geri Bildirimler: Sunucusuz (frontend-only) mimaride kurulan küresel veri köprüsünün ve dinamik kural haritalama mantığının çalışma hızı ekip üyeleri tarafından başarılı bulunmuş; ekip üyeleri tarafından WhatsApp/Telegram "Çok Yakında" teaser kartlarının yatırımcı sunumu öncesi pazar doğrulama (lean validation) hissini jüriye çok iyi aktarılacağı belirtilmiştir.
+
+Onay Durumu: Ürün, Sprint 2 için belirlenen "Uçtan uca durum yönetimli (stateful) MVP prototipi ve omnichannel büyüme vizyonu" hedeflerinin tamamını eksiksiz karşıladığı için Ürün Sahibi (Product Owner) ve ekip üyeleri tarafından %100 başarıyla onaylanmış ve teslim alınmıştır.
 
 ### F. Sprint Retrospective:
 
@@ -200,7 +204,7 @@ Nihai MVP başarılı bir şekilde oluşturuldu. Ekip üyelerinin yaptığı dem
   
 * **🔴 Ne Geliştirilebilir?:** 2.6 saniyelik animasyon senkronizasyonunu yakalamak için zaman aşımı (setTimeout) sürelerini kod içinde manuel eşitlemek zorunda kaldık. Bir sonraki geliştirme fazında merkezi bir animasyon zamanlayıcısı (event emitter) kurulabilir.
   
-* **🛠️ Aksiyon Planı:** Gerçek API onay süreçleri (Twilio/Telegram Bot API) için gereklilikler hazırlanacak ve backend entegrasyonuna başlanıp, ürünün son hali tamamlanacak.
+* **🛠️ Aksiyon Planı:** WhatsApp/Telegram chatbotunun aktifleşip, yasal izinlerinlerin alınması üzerine hızlıca aksiyon alınması üzerine tartışıldı.Gerçek API onay süreçleri (Twilio/Telegram Bot API) için gereklilikler hazırlanacak ve backend entegrasyonuna başlanıp, ürünün son hali tamamlanacak.
 
 ---
 
