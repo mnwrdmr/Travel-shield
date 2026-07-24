@@ -14,6 +14,7 @@ import {
   useContext,
   useState,
   useCallback,
+  useEffect,
   type ReactNode,
 } from "react";
 
@@ -25,6 +26,8 @@ import type {
   FeeLineItem,
   SavingsBreakdown,
   AlternativeTransport,
+  BaggageAnalysis,
+  BaggageDimensions,
 } from "@/types/travel";
 
 // ─────────────────────────────────────────────
@@ -32,9 +35,16 @@ import type {
 // ─────────────────────────────────────────────
 interface TravelContextValue {
   analysisResult: AnalysisResult | null;
+  baggageResult: BaggageAnalysis | null;
   isLoading: boolean;
+  isBaggageAnalyzing: boolean;
   error: string | null;
   runAiSimulation: (formData: RawFormInput) => Promise<void>;
+  runBaggageAiSimulation: (
+    operator: Operator,
+    dimensions?: BaggageDimensions,
+    imageUrl?: string
+  ) => Promise<BaggageAnalysis>;
   reset: () => void;
 }
 
@@ -354,6 +364,20 @@ function buildAlternatives(form: RawFormInput): AlternativeTransport[] {
   return alts;
 }
 
+function getAirlineBaggageLimit(operator: Operator): BaggageDimensions {
+  const limits: Record<Operator, BaggageDimensions> = {
+    RYANAIR: { widthCm: 40, heightCm: 20, depthCm: 25 },
+    WIZZAIR: { widthCm: 40, heightCm: 30, depthCm: 20 },
+    EASYJET: { widthCm: 56, heightCm: 45, depthCm: 25 },
+    TRENITALIA: { widthCm: 80, heightCm: 50, depthCm: 30 },
+    SNCF: { widthCm: 70, heightCm: 50, depthCm: 30 },
+    DB: { widthCm: 70, heightCm: 50, depthCm: 30 },
+    OBB: { widthCm: 70, heightCm: 50, depthCm: 30 },
+    FLIXBUS: { widthCm: 67, heightCm: 42, depthCm: 27 },
+  };
+  return limits[operator] || { widthCm: 40, heightCm: 20, depthCm: 25 };
+}
+
 // ─────────────────────────────────────────────
 // Provider component
 // ─────────────────────────────────────────────
@@ -361,8 +385,90 @@ export function TravelProvider({ children }: { children: ReactNode }) {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(
     null
   );
+  const [baggageResult, setBaggageResult] = useState<BaggageAnalysis | null>(
+    null
+  );
   const [isLoading, setIsLoading] = useState(false);
+  const [isBaggageAnalyzing, setIsBaggageAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Restore state from localStorage if available
+  useEffect(() => {
+    try {
+      const savedBaggage = localStorage.getItem("ts_baggage_result");
+      if (savedBaggage) {
+        setBaggageResult(JSON.parse(savedBaggage));
+      }
+      const savedAnalysis = localStorage.getItem("ts_analysis_result");
+      if (savedAnalysis) {
+        setAnalysisResult(JSON.parse(savedAnalysis));
+      }
+    } catch {
+      // Ignore localStorage errors
+    }
+  }, []);
+
+  const runBaggageAiSimulation = useCallback(
+    async (
+      operator: Operator,
+      dimensions?: BaggageDimensions,
+      imageUrl?: string
+    ): Promise<BaggageAnalysis> => {
+      setIsBaggageAnalyzing(true);
+      setError(null);
+
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 1800));
+
+        const allowed = getAirlineBaggageLimit(operator);
+        // Default to Ahmet's Hero Story bag (42x22x25 cm) for Ryanair if unspecified
+        const detected = dimensions || {
+          widthCm: allowed.widthCm + 2,
+          heightCm: allowed.heightCm + 2,
+          depthCm: allowed.depthCm,
+        };
+
+        const overage = {
+          width: Math.max(0, detected.widthCm - allowed.widthCm),
+          height: Math.max(0, detected.heightCm - allowed.heightCm),
+          depth: Math.max(0, detected.depthCm - allowed.depthCm),
+        };
+
+        const isOversized = overage.width > 0 || overage.height > 0 || overage.depth > 0;
+        const gateFee = operator === "RYANAIR" ? 70 : operator === "WIZZAIR" ? 80 : 48;
+
+        const result: BaggageAnalysis = {
+          id: `bag_${Date.now()}`,
+          status: isOversized ? "OVERSIZED" : "COMPLIANT",
+          detectedDimensions: detected,
+          allowedDimensions: allowed,
+          overageCm: overage,
+          potentialGateFee: isOversized ? gateFee : 0,
+          currency: "EUR",
+          confidenceScore: 0.94,
+          imageUrl: imageUrl || "/images/sample_bag.jpg",
+          recommendations: isOversized
+            ? [
+                `Çantanız ${operator} kabin limitlerini (${allowed.widthCm}×${allowed.heightCm}×${allowed.depthCm} cm) aşıyor.`,
+                `Kapıda €${gateFee} ceza ödememek için şimdi €18'e online kabin yükseltmesi ekleyin (€52 net tasarruf).`,
+                "Çantanızı yumuşak malzemeyse sıkıştırarak koruma limitine sokabilirsiniz.",
+              ]
+            : ["Çantanız kabin limitleri içerisinde tamamen güvenli."],
+        };
+
+        setBaggageResult(result);
+        try {
+          localStorage.setItem("ts_baggage_result", JSON.stringify(result));
+        } catch {
+          // Ignore storage write error
+        }
+        return result;
+      } finally {
+        setIsBaggageAnalyzing(false);
+      }
+    },
+    []
+  );
 
   const runAiSimulation = useCallback(
     async (formData: RawFormInput): Promise<void> => {
@@ -421,9 +527,15 @@ export function TravelProvider({ children }: { children: ReactNode }) {
           savings,
           alternatives,
           fees,
+          baggageAnalysis: baggageResult || undefined,
         };
 
         setAnalysisResult(result);
+        try {
+          localStorage.setItem("ts_analysis_result", JSON.stringify(result));
+        } catch {
+          // Ignore
+        }
       } catch (err) {
         const message =
           err instanceof Error ? err.message : "Bilinmeyen bir hata oluştu";
@@ -432,18 +544,35 @@ export function TravelProvider({ children }: { children: ReactNode }) {
         setIsLoading(false);
       }
     },
-    []
+    [baggageResult]
   );
 
   const reset = useCallback(() => {
     setAnalysisResult(null);
+    setBaggageResult(null);
     setIsLoading(false);
+    setIsBaggageAnalyzing(false);
     setError(null);
+    try {
+      localStorage.removeItem("ts_baggage_result");
+      localStorage.removeItem("ts_analysis_result");
+    } catch {
+      // Ignore
+    }
   }, []);
 
   return (
     <TravelContext.Provider
-      value={{ analysisResult, isLoading, error, runAiSimulation, reset }}
+      value={{
+        analysisResult,
+        baggageResult,
+        isLoading,
+        isBaggageAnalyzing,
+        error,
+        runAiSimulation,
+        runBaggageAiSimulation,
+        reset,
+      }}
     >
       {children}
     </TravelContext.Provider>

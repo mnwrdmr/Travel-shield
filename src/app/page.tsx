@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import HeroSection from "@/components/landing/HeroSection";
 import ProblemGrid from "@/components/landing/ProblemGrid";
+import BaggageTeaser from "@/components/landing/BaggageTeaser";
 import HowItWorks from "@/components/landing/HowItWorks";
 import FeaturesSection from "@/components/landing/FeaturesSection";
 import OmnichannelSection from "@/components/landing/OmnichannelSection";
+import ChatbotModal from "@/components/landing/ChatbotModal";
 
 export const metadata: Metadata = {
   title: "Travel Shield — Havayolu Gizli Cezalarına Karşı Yapay Zeka Kalkanı",
@@ -48,6 +50,16 @@ export default function HomePage() {
         <div className="h-px bg-gradient-to-r from-transparent via-[var(--color-border)] to-transparent" />
       </div>
 
+      {/* Sprint 3: Baggage AI Teaser Section */}
+      <BaggageTeaser />
+
+      <div
+        aria-hidden="true"
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
+      >
+        <div className="h-px bg-gradient-to-r from-transparent via-[var(--color-border)] to-transparent" />
+      </div>
+
       <HowItWorks />
 
       <div
@@ -67,7 +79,11 @@ export default function HomePage() {
       </div>
 
       <FeaturesSection />
+
+      {/* Floating Omnichannel WhatsApp/Telegram Chatbot Widget */}
+      <ChatbotModal />
     </main>
   );
 }
+
 

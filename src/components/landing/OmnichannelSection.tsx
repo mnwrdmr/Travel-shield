@@ -130,15 +130,13 @@ export default function OmnichannelSection() {
                       aria-hidden="true"
                     />
                   </div>
-                  {channel.comingSoon && (
-                    <Badge
-                      variant="secondary"
-                      className="text-xs px-3 py-1 rounded-full"
-                    >
-                      <Sparkles size={11} className="mr-1" aria-hidden="true" />
-                      Yakında
-                    </Badge>
-                  )}
+                  <Badge
+                    variant="secondary"
+                    className="text-xs px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                  >
+                    <Sparkles size={11} className="mr-1 text-emerald-400 animate-pulse" aria-hidden="true" />
+                    Canlı Simülatör (Sağ Altta)
+                  </Badge>
                 </div>
 
                 {/* Platform title */}

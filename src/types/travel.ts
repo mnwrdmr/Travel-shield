@@ -84,12 +84,41 @@ export interface AnalysisResult {
   savings: Savings;
   alternatives: AlternativeTransport[];
   fees: FeeLineItem[];
+  // Sprint 3 Addition
+  baggageAnalysis?: BaggageAnalysis;
 }
 
-// ─── Sprint 2: Person A — Form input bridge type ───
+// ─── Sprint 3: Baggage AI & Compliance Types ───
+
+export type BaggageStatus = "COMPLIANT" | "WARNING" | "OVERSIZED" | "EXCEEDED";
+
+export interface BaggageDimensions {
+  widthCm: number;
+  heightCm: number;
+  depthCm: number;
+}
+
+export interface BaggageAnalysis {
+  id: string;
+  status: BaggageStatus;
+  detectedDimensions: BaggageDimensions;
+  allowedDimensions: BaggageDimensions;
+  overageCm?: {
+    width: number;
+    height: number;
+    depth: number;
+  };
+  weightKg?: number;
+  maxWeightKg?: number;
+  potentialGateFee: number;
+  currency: string;
+  confidenceScore: number; // e.g. 0.94
+  imageUrl?: string;
+  recommendations: string[];
+}
+
+// ─── Sprint 2 & 3: Person A — Form input bridge type ───
 // Bridges Person Y's form to the AI simulation engine.
-// Person Y extracts these fields from the form and passes
-// them to runAiSimulation() in TravelContext.
 export interface RawFormInput {
   airline: Operator;
   transportType: TransportMode;
@@ -98,4 +127,8 @@ export interface RawFormInput {
   date: string; // YYYY-MM-DD
   cabinBagIncluded: boolean;
   pastedBookingText?: string; // Optional: paste mode
+  // Sprint 3 Additions:
+  baggageImage?: string;
+  baggageDimensions?: BaggageDimensions;
 }
+

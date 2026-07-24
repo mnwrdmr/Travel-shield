@@ -31,13 +31,13 @@ export default function HeroSection() {
 
       <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         {/* Eyebrow badge */}
-        <div className="flex justify-center mb-6">
+        <div className="flex flex-wrap justify-center gap-3 mb-6">
           <Badge
             variant="default"
-            className="gap-2 px-4 py-1.5 text-sm font-medium rounded-full"
+            className="gap-2 px-4 py-1.5 text-xs sm:text-sm font-semibold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-sm"
           >
-            <Sparkles size={14} aria-hidden="true" />
-            Yapay Zeka Destekli Bilet Koruma Sistemi
+            <Sparkles size={14} className="text-emerald-400 animate-pulse" aria-hidden="true" />
+            Baggage AI & Kapı Cezası Kalkanı (Sprint 3 Canlı)
           </Badge>
         </div>
 
