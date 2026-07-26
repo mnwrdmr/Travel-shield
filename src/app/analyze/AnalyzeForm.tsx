@@ -21,7 +21,7 @@
 // ─────────────────────────────────────────────
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   CalendarDays,
   Camera,
@@ -263,6 +263,7 @@ function TypedLine({ text, done }: { text: string; done: boolean }) {
 
 export default function AnalyzeForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const {
     isLoading,
     isBaggageAnalyzing,
@@ -271,7 +272,18 @@ export default function AnalyzeForm() {
     runBaggageAiSimulation,
   } = useTravel(); // Person A
 
-  const [section, setSection] = useState<Section>("ticket");
+  const [section, setSection] = useState<Section>(() => {
+    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("tab") === "baggage") {
+      return "baggage";
+    }
+    return "ticket";
+  });
+
+  useEffect(() => {
+    if (searchParams?.get("tab") === "baggage") {
+      setSection("baggage");
+    }
+  }, [searchParams]);
   const [mode, setMode] = useState<Mode>("paste");
   const [pastedText, setPastedText] = useState("");
   const [airline, setAirline] = useState<Airline>("RYANAIR");

@@ -6,6 +6,7 @@
 // ─────────────────────────────────────────────
 
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import AnalyzeForm from "./AnalyzeForm";
 
 export const metadata: Metadata = {
@@ -15,5 +16,10 @@ export const metadata: Metadata = {
 };
 
 export default function AnalyzePage() {
-  return <AnalyzeForm />;
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400 text-sm font-mono">Yükleniyor...</div>}>
+      <AnalyzeForm />
+    </Suspense>
+  );
 }
+

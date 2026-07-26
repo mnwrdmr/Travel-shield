@@ -48,7 +48,7 @@ export default function BaggageTeaser() {
 
             <div className="pt-2 flex flex-wrap gap-4">
               <Link
-                href="/analyze"
+                href="/analyze?tab=baggage"
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm shadow-lg shadow-emerald-500/20 transition-all hover:scale-[1.02]"
               >
                 <Camera size={18} />
