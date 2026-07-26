@@ -2,7 +2,13 @@
 
 // ─────────────────────────────────────────────
 // app/analyze/AnalyzeForm.tsx
-// SPRINT 2 — Person Y exclusive work dock (src/app/analyze/*)
+// SPRINT 2+3 — Person Y exclusive work dock (src/app/analyze/*)
+//
+// SPRINT 3 EKLERİ:
+//   ✅ Üst sekme yapısı: "Bilet Metni / PNR" ↔ "Bavul AI Kamera & AR Taraması"
+//   ✅ BaggageScannerTab entegrasyonu (components/analyze/)
+//   ✅ runBaggageAiSimulation(operator, dims, image) → /dashboard akışı
+//   ✅ Bagaj analizi için ayrı tarama overlay'i (1.8s motora senkron)
 //
 // DEĞİŞİKLİKLER (Sprint 1 → Sprint 2):
 //   ❌ KALDIRILDI: MOCK_ANALYSIS importu + ?id= yönlendirmesi
@@ -18,6 +24,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   CalendarDays,
+  Camera,
   ClipboardPaste,
   Bus,
   Luggage,
@@ -26,12 +33,19 @@ import {
   PlaneTakeoff,
   ScanLine,
   Send,
+  Ticket,
   TrainFront,
 } from "lucide-react";
+import { BaggageScannerTab } from "@/components/analyze/BaggageScannerTab";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useTravel } from "@/context/TravelContext"; // Person A
-import type { Operator, RawFormInput, TransportMode } from "@/types/travel";
+import type {
+  BaggageDimensions,
+  Operator,
+  RawFormInput,
+  TransportMode,
+} from "@/types/travel";
 import styles from "./analyze.module.css";
 
 // ── sabitler ─────────────────────────────────
@@ -46,6 +60,16 @@ const PARSING_LINES = [
 // 4 satır × 640ms ≈ 2.56s → context'in 2600ms simülasyonuyla senkron
 const LINE_MS = 640;
 
+const BAGGAGE_LINES = [
+  "Bavul görüntüsü işleniyor…",
+  "Kenar tespiti → boyut kestirimi…",
+  "Havayolu kabin limitiyle kıyaslanıyor…",
+];
+
+// 3 satır × 600ms = 1.8s → context'in bagaj motoruyla senkron
+const BAG_LINE_MS = 600;
+
+type Section = "ticket" | "baggage";
 type Mode = "paste" | "manual";
 type Airline = Extract<Operator, "RYANAIR" | "WIZZAIR" | "EASYJET">;
 
@@ -239,8 +263,15 @@ function TypedLine({ text, done }: { text: string; done: boolean }) {
 
 export default function AnalyzeForm() {
   const router = useRouter();
-  const { isLoading, error, runAiSimulation } = useTravel(); // Person A
+  const {
+    isLoading,
+    isBaggageAnalyzing,
+    error,
+    runAiSimulation,
+    runBaggageAiSimulation,
+  } = useTravel(); // Person A
 
+  const [section, setSection] = useState<Section>("ticket");
   const [mode, setMode] = useState<Mode>("paste");
   const [pastedText, setPastedText] = useState("");
   const [airline, setAirline] = useState<Airline>("RYANAIR");
@@ -251,6 +282,8 @@ export default function AnalyzeForm() {
   const [cabinBagIncluded, setCabinBagIncluded] = useState(false);
 
   const [lineIndex, setLineIndex] = useState(0);
+  const [bagLineIndex, setBagLineIndex] = useState(0);
+  const [bagPreview, setBagPreview] = useState<string | null>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const canAnalyze =
@@ -289,6 +322,24 @@ export default function AnalyzeForm() {
     router.push("/dashboard");
   }
 
+  async function handleBaggageAnalyze(
+    dimensions: BaggageDimensions,
+    imageUrl?: string
+  ) {
+    if (isBaggageAnalyzing || isLoading) return;
+
+    setBagPreview(imageUrl ?? null);
+    setBagLineIndex(0);
+    timers.current.forEach(clearTimeout);
+    timers.current = BAGGAGE_LINES.map((_, i) =>
+      setTimeout(() => setBagLineIndex(i + 1), (i + 1) * BAG_LINE_MS)
+    );
+
+    // Person A'nın bagaj motoru (1800ms) — bitince dashboard'a
+    await runBaggageAiSimulation(airline, dimensions, imageUrl);
+    router.push("/dashboard");
+  }
+
   return (
     <main className="mx-auto w-full max-w-xl px-4 py-14 sm:py-20">
       {/* başlık */}
@@ -306,10 +357,55 @@ export default function AnalyzeForm() {
         </p>
       </header>
 
-      {/* biniş kartı */}
+      {/* üst sekmeler: bilet ↔ bavul (Sprint 3) */}
+      <div
+        role="tablist"
+        aria-label="Analiz türü"
+        className={`mb-4 grid grid-cols-2 rounded-xl border border-white/10 bg-white/5 p-1 ${styles.fadeUpDelay}`}
+      >
+        {(
+          [
+            { key: "ticket", icon: Ticket, label: "Bilet Metni / PNR" },
+            { key: "baggage", icon: Camera, label: "Bavul AI Kamera & AR" },
+          ] as const
+        ).map(({ key, icon: Icon, label }) => (
+          <button
+            key={key}
+            type="button"
+            role="tab"
+            aria-selected={section === key}
+            onClick={() => setSection(key)}
+            className={`flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] ${
+              section === key
+                ? "bg-[var(--color-primary)]/20 font-medium text-zinc-100 ring-1 ring-[var(--color-primary)]/40"
+                : "text-zinc-400 hover:text-zinc-200"
+            }`}
+          >
+            <Icon size={15} aria-hidden />
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {section === "baggage" ? (
+        /* ── bavul AI taraması (Sprint 3) ── */
+        <Card
+          aria-label="Bavul taraması"
+          className={`overflow-hidden ${styles.panelIn}`}
+        >
+          <div className="px-6 py-6">
+            <BaggageScannerTab
+              operator={airline}
+              onOperatorChange={(op) => setAirline(op as Airline)}
+              analyzing={isBaggageAnalyzing}
+              onAnalyze={handleBaggageAnalyze}
+            />
+          </div>
+        </Card>
+      ) : (
       <Card
         aria-label="Seyahat bilgileri"
-        className={`overflow-hidden ${styles.fadeUpDelay}`}
+        className={`overflow-hidden ${styles.panelIn}`}
       >
         {/* kart üst şeridi */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-6 py-3">
@@ -495,6 +591,7 @@ export default function AnalyzeForm() {
           </Button>
         </div>
       </Card>
+      )}
 
       {/* hata durumu (context'ten) */}
       {error && (
@@ -531,6 +628,55 @@ export default function AnalyzeForm() {
       <p className="mt-6 text-center font-mono text-[11px] tracking-wide text-[var(--color-foreground)]/40">
         RYR · WZZ · EZY tarife anlık görüntüleri · yalnızca simülasyon verisi
       </p>
+
+      {/* ── Bagaj AI tarama overlay'i (Sprint 3) ────────────────── */}
+      {isBaggageAnalyzing && (
+        <div
+          role="status"
+          aria-live="polite"
+          className={`fixed inset-0 z-50 flex items-center justify-center bg-black/85 px-4 backdrop-blur-sm ${styles.overlayIn}`}
+        >
+          <div className="w-full max-w-md">
+            {/* taranan bavul */}
+            <div className="relative overflow-hidden rounded-xl bg-zinc-900 p-4 shadow-2xl ring-1 ring-white/10">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-zinc-400">
+                  Bavul taraması
+                </span>
+                <span className="font-mono text-[10px] text-zinc-500">
+                  {airline}
+                </span>
+              </div>
+              {bagPreview ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={bagPreview}
+                  alt=""
+                  className="mx-auto mt-3 max-h-44 w-auto rounded-md object-contain opacity-90"
+                />
+              ) : (
+                <div className="mt-3 flex h-28 items-center justify-center rounded-md bg-white/5">
+                  <Luggage size={34} className="text-zinc-600" aria-hidden />
+                </div>
+              )}
+              <div aria-hidden className={styles.scanline} />
+            </div>
+
+            {/* parsing terminali */}
+            <div className="mt-5 min-h-[92px] space-y-2 px-1">
+              <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-zinc-400">
+                Baggage AI görüntüyü değerlendiriyor…
+              </p>
+              {BAGGAGE_LINES.slice(
+                0,
+                Math.min(bagLineIndex + 1, BAGGAGE_LINES.length)
+              ).map((line, i) => (
+                <TypedLine key={line} text={line} done={i < bagLineIndex} />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── AI tarama overlay'i (global isLoading ile) ──────────── */}
       {isLoading && (
