@@ -32,40 +32,6 @@ const socialLinks = [
 export default function Footer() {
   return (
     <footer aria-label="Site alt bilgisi" className="relative border-t border-[var(--color-border)]">
-      {/* Final CTA band */}
-      <div className="relative overflow-hidden bg-[var(--color-primary)]/8 border-b border-[var(--color-border)]">
-        {/* Glow */}
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 bg-gradient-to-r from-transparent via-[var(--color-primary)]/10 to-transparent pointer-events-none"
-        />
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-[var(--color-primary)] mb-2">
-              Yolculuğunuzu Güvence Altına Alın
-            </p>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-[var(--color-foreground)] leading-tight">
-              Bir sonraki cezayı beklemeden
-              <br className="hidden sm:block" />
-              biletinizi şimdi analiz edin.
-            </h2>
-          </div>
-          <div className="shrink-0">
-            <Button
-              asChild
-              variant="default"
-              size="lg"
-              className="shadow-lg shadow-[var(--color-primary)]/25 hover:shadow-[var(--color-primary)]/40 transition-shadow duration-300"
-            >
-              <Link href="/analyze" className="flex items-center gap-2">
-                Ücretsiz Analiz Başlat
-                <ArrowRight size={18} aria-hidden="true" />
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </div>
-
       {/* Main footer body */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">

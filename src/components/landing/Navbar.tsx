@@ -6,13 +6,7 @@ import { Menu, X, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-const navLinks = [
-  { label: "Engellenen Tuzaklar", href: "#traps" },
-  { label: "Bavul AI Taraması", href: "#baggage-teaser" },
-  { label: "Nasıl Çalışır?", href: "#how-it-works" },
-  { label: "Chatbot Koruması", href: "#omnichannel" },
-  { label: "Özellikler", href: "#features" },
-];
+const navLinks: { label: string; href: string }[] = [];
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
