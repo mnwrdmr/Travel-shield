@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 
 const navLinks = [
   { label: "Engellenen Tuzaklar", href: "#traps" },
+  { label: "Bavul AI Taraması", href: "#baggage-teaser" },
   { label: "Nasıl Çalışır?", href: "#how-it-works" },
   { label: "Chatbot Koruması", href: "#omnichannel" },
   { label: "Özellikler", href: "#features" },

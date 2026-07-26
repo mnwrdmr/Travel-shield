@@ -5,7 +5,7 @@ import { Camera, ShieldAlert, Sparkles, CheckCircle2, ArrowRight } from "lucide-
 
 export default function BaggageTeaser() {
   return (
-    <section className="py-16 bg-gradient-to-b from-slate-900 to-slate-950 text-white relative overflow-hidden">
+    <section id="baggage-teaser" className="py-16 bg-gradient-to-b from-slate-900 to-slate-950 text-white relative overflow-hidden">
       {/* Background Glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -16,7 +16,7 @@ export default function BaggageTeaser() {
           <div className="space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
               <Sparkles size={14} className="animate-pulse" />
-              <span>Sprint 3 Canlı Özellik: 3D Baggage AI</span>
+              <span>Yapay Zeka Destekli 3D Bagaj Taraması</span>
             </div>
 
             <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">

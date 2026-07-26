@@ -20,12 +20,7 @@ export default function HeroSection() {
         <div className="absolute -bottom-40 -right-20 w-[500px] h-[500px] rounded-full bg-[var(--color-success)]/8 blur-[100px]" />
         {/* Center subtle grid */}
         <div
-          className="absolute inset-0 opacity-[0.03]"
-          style={{
-            backgroundImage:
-              "linear-gradient(var(--color-foreground) 1px, transparent 1px), linear-gradient(90deg, var(--color-foreground) 1px, transparent 1px)",
-            backgroundSize: "60px 60px",
-          }}
+          className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(to_right,var(--color-foreground)_1px,transparent_1px),linear-gradient(to_bottom,var(--color-foreground)_1px,transparent_1px)] bg-[size:60px_60px]"
         />
       </div>
 
@@ -37,7 +32,7 @@ export default function HeroSection() {
             className="gap-2 px-4 py-1.5 text-xs sm:text-sm font-semibold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-sm"
           >
             <Sparkles size={14} className="text-emerald-400 animate-pulse" aria-hidden="true" />
-            Baggage AI & Kapı Cezası Kalkanı (Sprint 3 Canlı)
+            Baggage AI & Kapı Cezası Kalkanı
           </Badge>
         </div>
 

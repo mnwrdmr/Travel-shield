@@ -82,7 +82,7 @@ export default function ChatbotModal() {
         className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-4 py-3 font-bold shadow-2xl transition-all hover:scale-105 group"
       >
         <MessageSquare size={20} className="group-hover:rotate-12 transition-transform" />
-        <span className="text-xs sm:text-sm">Omnichannel AI Bot</span>
+        <span className="text-xs sm:text-sm">WhatsApp / Telegram AI Bot</span>
         <span className="flex h-2.5 w-2.5 relative">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-950 opacity-75" />
           <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-slate-950" />
@@ -92,7 +92,7 @@ export default function ChatbotModal() {
       {/* Modal Overlay */}
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in">
-          <div className="w-full sm:max-w-md h-[550px] bg-slate-900 rounded-t-2xl sm:rounded-2xl border border-slate-800 shadow-2xl flex flex-col overflow-hidden">
+          <div className="w-full sm:max-w-md h-[560px] bg-slate-900 rounded-t-2xl sm:rounded-2xl border border-slate-800 shadow-2xl flex flex-col overflow-hidden">
             
             {/* Modal Header */}
             <div className={`p-3.5 flex items-center justify-between transition-colors ${isWa ? "bg-emerald-700 text-white" : "bg-sky-600 text-white"}`}>
@@ -102,37 +102,45 @@ export default function ChatbotModal() {
                 </div>
                 <div>
                   <div className="flex items-center gap-1.5">
-                    <span className="font-bold text-sm">Travel Shield AI Bot</span>
+                    <span className="font-bold text-sm">Travel Shield Bot Simülatörü</span>
                     <Sparkles size={13} className="text-yellow-300" />
                   </div>
-                  <p className="text-[11px] text-white/80">Çevrimiçi · Anında Bilet & Bagaj Taraması</p>
+                  <p className="text-[11px] text-white/80">Sitenin Yanı Sıra WhatsApp & Telegram Koruması</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
                 {/* Channel Switcher */}
-                <div className="flex bg-black/20 p-0.5 rounded-lg text-[10px] font-bold">
-                  <button
-                    onClick={() => setChannel("WHATSAPP")}
-                    className={`px-2 py-1 rounded-md transition-all ${isWa ? "bg-white text-emerald-800 shadow" : "text-white/70"}`}
-                  >
-                    WhatsApp
-                  </button>
-                  <button
-                    onClick={() => setChannel("TELEGRAM")}
-                    className={`px-2 py-1 rounded-md transition-all ${!isWa ? "bg-white text-sky-800 shadow" : "text-white/70"}`}
-                  >
-                    Telegram
-                  </button>
+                <div className="flex flex-col items-end">
+                  <span className="text-[9px] uppercase tracking-wider text-white/70 font-semibold mb-0.5">Kanal:</span>
+                  <div className="flex bg-black/20 p-0.5 rounded-lg text-[10px] font-bold">
+                    <button
+                      onClick={() => setChannel("WHATSAPP")}
+                      className={`px-2 py-0.5 rounded-md transition-all ${isWa ? "bg-white text-emerald-800 shadow" : "text-white/70"}`}
+                    >
+                      WhatsApp
+                    </button>
+                    <button
+                      onClick={() => setChannel("TELEGRAM")}
+                      className={`px-2 py-0.5 rounded-md transition-all ${!isWa ? "bg-white text-sky-800 shadow" : "text-white/70"}`}
+                    >
+                      Telegram
+                    </button>
+                  </div>
                 </div>
 
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="p-1 rounded-lg hover:bg-white/10 transition-colors text-white/80"
+                  className="p-1 rounded-lg hover:bg-white/10 transition-colors text-white/80 ml-1"
                 >
                   <X size={18} />
                 </button>
               </div>
+            </div>
+
+            {/* Omnichannel Info Banner */}
+            <div className="px-3.5 py-2 bg-slate-800/90 border-b border-slate-700 text-[11px] text-slate-300 leading-tight">
+              💡 <strong>Çok Kanallı Koruma:</strong> Web sitemizin yanı sıra biletlerinizi doğrudan WhatsApp veya Telegram botlarımıza ileterek anında ceza taraması yapabilirsiniz.
             </div>
 
             {/* Chat Body */}
