@@ -1,14 +1,20 @@
-// ─────────────────────────────────────────────
-// types/travel.ts
-// Single source of truth for all domain types.
-// Person B (backend) should extend these shapes
-// when real API data arrives.
-// ─────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// src/types/travel.ts
+// SPRINT FINAL: Türk havayolları eklendi
+//   THY | PEGASUS | AJET | SUNEXPRESS | CORENDON
+// ─────────────────────────────────────────────────────────────
 
 export type Operator =
   | "RYANAIR"
   | "WIZZAIR"
   | "EASYJET"
+  // ── Türk havayolları (Sprint Final) ──
+  | "THY"
+  | "PEGASUS"
+  | "AJET"
+  | "SUNEXPRESS"
+  | "CORENDON"
+  // ── Demiryolu & otobüs ──
   | "TRENITALIA"
   | "SNCF"
   | "DB"
@@ -25,9 +31,9 @@ export interface TravelSegment {
   mode: TransportMode;
   origin: string;
   destination: string;
-  departureTime: string; // ISO 8601
+  departureTime: string;
   arrivalTime: string;
-  checkInDeadline?: string; // ISO 8601 — for auto check-in countdown
+  checkInDeadline?: string;
   validationRequired: boolean;
 }
 
@@ -36,7 +42,7 @@ export interface RiskAlert {
   level: RiskLevel;
   title: string;
   description: string;
-  potentialFine: number; // EUR
+  potentialFine: number;
   currency: string;
   actionLabel?: string;
   actionHref?: string;
@@ -64,32 +70,30 @@ export interface AlternativeTransport {
   departureTime: string;
   price: number;
   currency: string;
-  savings: number; // vs current booking
+  savings: number;
   bookingUrl?: string;
-  tags: string[]; // e.g. ["Faster", "No baggage fees"]
+  tags: string[];
 }
 
 export interface FeeLineItem {
   label: string;
   amount: number;
   currency: string;
-  avoided: boolean; // true = we saved this, false = still at risk
+  avoided: boolean;
 }
 
 export interface AnalysisResult {
   id: string;
-  analyzedAt: string; // ISO 8601
+  analyzedAt: string;
   segment: TravelSegment;
   risks: RiskAlert[];
   savings: Savings;
   alternatives: AlternativeTransport[];
   fees: FeeLineItem[];
-  // Sprint 3 Addition
   baggageAnalysis?: BaggageAnalysis;
 }
 
-// ─── Sprint 3: Baggage AI & Compliance Types ───
-
+// ── Bagaj AI tipleri ─────────────────────────────────────────
 export type BaggageStatus = "COMPLIANT" | "WARNING" | "OVERSIZED" | "EXCEEDED";
 
 export interface BaggageDimensions {
@@ -103,32 +107,37 @@ export interface BaggageAnalysis {
   status: BaggageStatus;
   detectedDimensions: BaggageDimensions;
   allowedDimensions: BaggageDimensions;
-  overageCm?: {
-    width: number;
-    height: number;
-    depth: number;
-  };
+  overageCm?: { width: number; height: number; depth: number };
   weightKg?: number;
   maxWeightKg?: number;
   potentialGateFee: number;
   currency: string;
-  confidenceScore: number; // e.g. 0.94
+  confidenceScore: number;
   imageUrl?: string;
   recommendations: string[];
 }
 
-// ─── Sprint 2 & 3: Person A — Form input bridge type ───
-// Bridges Person Y's form to the AI simulation engine.
 export interface RawFormInput {
   airline: Operator;
   transportType: TransportMode;
   origin: string;
   destination: string;
-  date: string; // YYYY-MM-DD
+  date: string;
   cabinBagIncluded: boolean;
-  pastedBookingText?: string; // Optional: paste mode
-  // Sprint 3 Additions:
+  pastedBookingText?: string;
   baggageImage?: string;
   baggageDimensions?: BaggageDimensions;
 }
 
+// ── FastAPI backend yanıt tipi (LuggageScanner için) ─────────
+export interface BackendScanResponse {
+  is_luggage: boolean;
+  message: string;
+  status: "PASS" | "FAIL" | "WARNING" | null;
+  detected_dimensions: { width_cm: number; height_cm: number; depth_cm: number } | null;
+  allowed_dimensions:  { width_cm: number; height_cm: number; depth_cm: number } | null;
+  overage_cm:          { width_cm: number; height_cm: number; depth_cm: number } | null;
+  potential_gate_fee_eur: number | null;
+  confidence_score: number | null;
+  recommendations: string[] | null;
+}
