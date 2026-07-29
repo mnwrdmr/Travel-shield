@@ -1,4 +1,19 @@
 "use client";
+
+
+/**
+ * @file DashboardClientWrapper.tsx
+ * @description Client-side dashboard sarmalayıcısı.
+ *
+ * Veri öncelik sırası (cascading fallback):
+ *  1. TravelContext (canlı — form doldurulduğunda)
+ *  2. localStorage (sayfa yenilendiğinde dayanıklılık)
+ *  3. initialAnalysis prop (Server Component'ten gelen mock)
+ *
+ * Bu pattern, Next.js App Router'da Server Component + Client Context
+ * uyumsuzluğunu çözer ("hybrid hydration").
+ */
+
 // ─────────────────────────────────────────────────────────────
 // src/components/dashboard/DashboardClientWrapper.tsx
 // SPRINT 3 — Person M yeni sarmalayıcı
@@ -15,148 +30,80 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ScanLine, RefreshCw, Shield } from "lucide-react";
+import { RefreshCw, ScanLine, Shield } from "lucide-react";
 
-import { useTravel }                  from "@/context/TravelContext";
-import { BaggageComplianceCard }       from "@/components/dashboard/BaggageComplianceCard";
-import { TravelSummaryCard }           from "@/components/dashboard/TravelSummaryCard";
-import { RiskAlertCard }               from "@/components/dashboard/RiskAlertCard";
-import { SavingsCard }                 from "@/components/dashboard/SavingsCard";
-import { AlternativeTransportCard }    from "@/components/dashboard/AlternativeTransportCard";
-import { FeeBreakdownCard }            from "@/components/dashboard/FeeBreakdownCard";
-import { DashboardSkeleton }           from "@/components/dashboard/DashboardStates";
+import { useTravel } from "@/context/TravelContext";
+
+import { BaggageComplianceCard }    from "@/components/dashboard/BaggageComplianceCard";
+import { TravelSummaryCard }        from "@/components/dashboard/TravelSummaryCard";
+import { RiskAlertCard }            from "@/components/dashboard/RiskAlertCard";
+import { SavingsCard }              from "@/components/dashboard/SavingsCard";
+import { AlternativeTransportCard } from "@/components/dashboard/AlternativeTransportCard";
+import { FeeBreakdownCard }         from "@/components/dashboard/FeeBreakdownCard";
+import { DashboardSkeleton }        from "@/components/dashboard/DashboardStates";
 
 import type { AnalysisResult, BaggageAnalysis } from "@/types/travel";
 
+// ─── localStorage anahtarları ─────────────────────────────────
+const LS_KEYS = {
+  analysis: "ts_analysisResult_v1",
+  baggage:  "ts_baggageResult_v1",
+} as const;
+
+// ─── localStorage yardımcıları ────────────────────────────────
+
+function readFromStorage<T>(key: string): T | null {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as T) : null;
+  } catch {
+    return null;
+  }
+}
+
+// ─── Prop tipleri ─────────────────────────────────────────────
+
 interface DashboardClientWrapperProps {
-  /** Server Component'ten gelen mock/initial veri (fallback) */
+  /** Server Component'ten gelen fallback veri */
   initialAnalysis: AnalysisResult | null;
 }
 
-// ── localStorage anahtar sabitleri ───────────────────────────
-const LS_ANALYSIS = "ts_analysisResult";
-const LS_BAGGAGE  = "ts_baggageResult";
+// ─── Boş durum ────────────────────────────────────────────────
 
-export function DashboardClientWrapper({ initialAnalysis }: DashboardClientWrapperProps) {
-  const router = useRouter();
-  const { analysisResult, baggageResult, isLoading } = useTravel();
-
-  // Hydration sonrası localStorage'dan oku (SSR uyumlu)
-  const [lsAnalysis, setLsAnalysis] = useState<AnalysisResult | null>(null);
-  const [lsBaggage,  setLsBaggage]  = useState<BaggageAnalysis | null>(null);
-  const [hydrated,   setHydrated]   = useState(false);
-
-  useEffect(() => {
-    try {
-      const a = localStorage.getItem(LS_ANALYSIS);
-      const b = localStorage.getItem(LS_BAGGAGE);
-      if (a) setLsAnalysis(JSON.parse(a));
-      if (b) setLsBaggage(JSON.parse(b));
-    } catch {
-      // localStorage erişim hatası — sessizce geç
-    }
-    setHydrated(true);
-  }, []);
-
-  // ── Öncelik sırası: Context > localStorage > initialAnalysis
-  const activeAnalysis: AnalysisResult | null =
-    analysisResult ?? lsAnalysis ?? initialAnalysis;
-
-  const activeBaggage: BaggageAnalysis | null =
-    baggageResult ?? lsBaggage ?? initialAnalysis?.baggageAnalysis ?? null;
-
-  // ── Loading: Person A'nın 2.6s simülasyonu veya localStorage okuması ──
-  if (isLoading || !hydrated) {
-    return <DashboardSkeleton />;
-  }
-
-  // ── Boş durum: hiçbir veri yok ───────────────────────────────
-  if (!activeAnalysis && !activeBaggage) {
-    return <EmptyState onNavigate={() => router.push("/analyze")} />;
-  }
-
-  // ── Kritik sayaç ─────────────────────────────────────────────
-  const criticalCount = activeAnalysis?.risks.filter((r) => r.level === "CRITICAL").length ?? 0;
-
-  return (
-    <>
-      {/* Sayfa başlığı */}
-      <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-xl font-bold text-white">Seyahat Analizi</h1>
-          <p className="mt-0.5 text-xs text-slate-400">
-            {activeAnalysis
-              ? `${new Date(activeAnalysis.analyzedAt).toLocaleTimeString("tr-TR", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })} tarihinde tarandı`
-              : "Bagaj analizi tamamlandı"}
-            {criticalCount > 0 && (
-              <span className="ml-2 font-semibold text-red-400">
-                · {criticalCount} kritik sorun
-              </span>
-            )}
-          </p>
-        </div>
-        <button
-          onClick={() => router.push("/analyze")}
-          className="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-xs font-medium text-slate-300 hover:bg-slate-700 transition-colors"
-        >
-          <RefreshCw size={13} />
-          Yeniden Tara
-        </button>
-      </div>
-
-      <div className="space-y-5">
-        {/* ── Sprint 3: BaggageComplianceCard en üstte ── */}
-        {activeBaggage && (
-          <BaggageComplianceCard baggage={activeBaggage} />
-        )}
-
-        {/* ── Sprint 2 kartları: Yalnızca seyahat analizi varsa ── */}
-        {activeAnalysis && (
-          <>
-            <TravelSummaryCard segment={activeAnalysis.segment} />
-            <RiskAlertCard alerts={activeAnalysis.risks} />
-            <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-              <SavingsCard savings={activeAnalysis.savings} />
-              <AlternativeTransportCard alternatives={activeAnalysis.alternatives} />
-            </div>
-            <FeeBreakdownCard fees={activeAnalysis.fees} />
-          </>
-        )}
-      </div>
-
-      <p className="mt-8 pb-6 text-center text-[11px] text-slate-600 leading-relaxed">
-        Travel Shield Yapay Zeka yalnızca bilgilendirme amaçlıdır.
-        Seyahat kurallarını her zaman operatörünüzle doğrulayın.
-      </p>
-    </>
-  );
+interface EmptyStateProps {
+  onNavigate: () => void;
 }
 
-// ── Premium boş durum ─────────────────────────────────────────
-function EmptyState({ onNavigate }: { onNavigate: () => void }) {
+function EmptyState({ onNavigate }: EmptyStateProps) {
   return (
-    <div className="flex min-h-[70vh] flex-col items-center justify-center text-center px-6">
+    <div className="flex min-h-[70vh] flex-col items-center justify-center px-6 text-center">
       <div className="relative mb-6">
         <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-slate-800 bg-slate-900">
-          <ScanLine size={36} className="text-slate-600" />
+          <ScanLine size={36} className="text-slate-600" aria-hidden />
         </div>
-        <span className="absolute inset-0 animate-ping rounded-2xl bg-slate-700 opacity-20" />
+        <span
+          aria-hidden
+          className="absolute inset-0 animate-ping rounded-2xl bg-slate-700 opacity-20"
+        />
       </div>
-      <h2 className="text-xl font-bold text-white">Analiz edilmiş bilet bulunamadı</h2>
-      <p className="mt-3 max-w-sm text-sm text-slate-400 leading-relaxed">
+
+      <h2 className="text-xl font-bold text-white">
+        Analiz edilmiş bilet bulunamadı
+      </h2>
+      <p className="mt-3 max-w-sm text-sm leading-relaxed text-slate-400">
         Seyahat belgelerinizi yükleyin veya AI Agent giriş panelini kullanarak
         biletinizi ve bagajınızı taramaya başlayın.
       </p>
+
       <button
+        type="button"
         onClick={onNavigate}
-        className="mt-8 inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-6 py-3 text-sm font-bold text-slate-950 hover:bg-emerald-400 active:scale-95 transition-all"
+        className="mt-8 inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-6 py-3 text-sm font-bold text-slate-950 transition-all hover:bg-emerald-400 active:scale-95"
       >
-        <ScanLine size={16} />
+        <ScanLine size={16} aria-hidden />
         AI Agent Panelini Aç
       </button>
+
       <p className="mt-4 text-xs text-slate-600">
         Ya da Telegram botumuz üzerinden bilet PDF'inizi iletin
       </p>
@@ -164,17 +111,132 @@ function EmptyState({ onNavigate }: { onNavigate: () => void }) {
   );
 }
 
-// ── Sticky nav — DashboardShell'den taşındı ───────────────────
+// ─── Sayfa başlığı ────────────────────────────────────────────
+
+interface PageHeaderProps {
+  analyzedAt: string;
+  criticalCount: number;
+  onRescan: () => void;
+}
+
+function PageHeader({ analyzedAt, criticalCount, onRescan }: PageHeaderProps) {
+  const timeLabel = new Date(analyzedAt).toLocaleTimeString("tr-TR", {
+    hour:   "2-digit",
+    minute: "2-digit",
+  });
+
+  return (
+    <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+      <div>
+        <h1 className="text-xl font-bold text-white">Seyahat Analizi</h1>
+        <p className="mt-0.5 text-xs text-slate-400">
+          {timeLabel} tarihinde tarandı
+          {criticalCount > 0 && (
+            <span className="ml-2 font-semibold text-red-400">
+              · {criticalCount} kritik sorun
+            </span>
+          )}
+        </p>
+      </div>
+
+      <button
+        type="button"
+        onClick={onRescan}
+        className="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-xs font-medium text-slate-300 transition-colors hover:bg-slate-700"
+      >
+        <RefreshCw size={13} aria-hidden />
+        Yeniden Tara
+      </button>
+    </div>
+  );
+}
+
+// ─── Ana bileşen ─────────────────────────────────────────────
+
+export function DashboardClientWrapper({ initialAnalysis }: DashboardClientWrapperProps) {
+  const router = useRouter();
+  const { analysisResult, baggageResult, isLoading } = useTravel();
+
+  const [lsAnalysis, setLsAnalysis] = useState<AnalysisResult | null>(null);
+  const [lsBaggage,  setLsBaggage]  = useState<BaggageAnalysis | null>(null);
+  const [hydrated,   setHydrated]   = useState(false);
+
+  // localStorage'dan hydrate — client-only
+  useEffect(() => {
+    setLsAnalysis(readFromStorage<AnalysisResult>(LS_KEYS.analysis));
+    setLsBaggage(readFromStorage<BaggageAnalysis>(LS_KEYS.baggage));
+    setHydrated(true);
+  }, []);
+
+  // Veri öncelik sırası
+  const activeAnalysis = analysisResult ?? lsAnalysis ?? initialAnalysis;
+  const activeBaggage  = baggageResult  ?? lsBaggage  ?? initialAnalysis?.baggageAnalysis ?? null;
+
+  if (isLoading || !hydrated) return <DashboardSkeleton />;
+
+  if (!activeAnalysis && !activeBaggage) {
+    return <EmptyState onNavigate={() => router.push("/analyze")} />;
+  }
+
+  const criticalCount =
+    activeAnalysis?.risks.filter((r) => r.level === "CRITICAL").length ?? 0;
+
+  return (
+    <>
+      {activeAnalysis && (
+        <PageHeader
+          analyzedAt={activeAnalysis.analyzedAt}
+          criticalCount={criticalCount}
+          onRescan={() => router.push("/analyze")}
+        />
+      )}
+
+      <div className="space-y-5">
+        {/* Sprint 3 — Bagaj kartı en üstte */}
+        {activeBaggage && (
+          <BaggageComplianceCard baggage={activeBaggage} />
+        )}
+
+        {/* Sprint 2 — Seyahat kartları */}
+        {activeAnalysis && (
+          <>
+            <TravelSummaryCard segment={activeAnalysis.segment} />
+            <RiskAlertCard alerts={activeAnalysis.risks} />
+
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+              <SavingsCard savings={activeAnalysis.savings} />
+              <AlternativeTransportCard alternatives={activeAnalysis.alternatives} />
+            </div>
+
+            <FeeBreakdownCard fees={activeAnalysis.fees} />
+          </>
+        )}
+      </div>
+
+      <p className="mt-8 pb-6 text-center text-[11px] leading-relaxed text-slate-600">
+        Travel Shield Yapay Zeka yalnızca bilgilendirme amaçlıdır.
+        Seyahat kurallarını her zaman operatörünüzle doğrulayın.
+      </p>
+    </>
+  );
+}
+
+// ─── Sticky nav (page.tsx'ten export edilir) ──────────────────
+
 export function DashboardNav() {
   return (
-    <nav className="sticky top-0 z-10 border-b border-slate-800 bg-slate-950/80 backdrop-blur-md">
+    <nav
+      aria-label="Dashboard navigasyon"
+      className="sticky top-0 z-10 border-b border-slate-800 bg-slate-950/80 backdrop-blur-md"
+    >
       <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
         <div className="flex items-center gap-2">
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/10">
-            <Shield size={14} className="text-white" />
+            <Shield size={14} className="text-white" aria-hidden />
           </div>
           <span className="text-sm font-bold text-white">Travel Shield</span>
         </div>
+
         <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-400">
           Koruma Aktif
         </span>

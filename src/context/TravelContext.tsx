@@ -1,5 +1,22 @@
 "use client";
 
+
+/**
+ * @file TravelContext.tsx
+ * @description Global uygulama state'i — React Context API.
+ *
+ * Yönetilen state:
+ *  - analysisResult    : Bilet analizi sonucu
+ *  - baggageResult     : Bagaj AI analizi sonucu
+ *  - isLoading         : Bilet analizi yüklenme durumu
+ *  - isBaggageAnalyzing: Bagaj analizi yüklenme durumu
+ *  - error             : Hata mesajı
+ *
+ * Kalıcılık: Her iki sonuç da localStorage'a yazılır,
+ *            sayfa yenilendiğinde client-side hydration ile geri okunur.
+ */
+
+
 // ─────────────────────────────────────────────
 // context/TravelContext.tsx
 // Sprint 2 — Person A: Global State Engine
@@ -11,457 +28,379 @@
 
 import {
   createContext,
-  useContext,
-  useState,
   useCallback,
+  useContext,
   useEffect,
+  useState,
   type ReactNode,
 } from "react";
 
 import type {
   AnalysisResult,
-  RawFormInput,
-  Operator,
-  RiskAlert,
-  FeeLineItem,
-  SavingsBreakdown,
-  AlternativeTransport,
   BaggageAnalysis,
   BaggageDimensions,
+  FeeLineItem,
+  Operator,
+  RawFormInput,
+  RiskAlert,
 } from "@/types/travel";
 
-// ─────────────────────────────────────────────
-// Context shape
-// ─────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// Tip tanımları
+// ─────────────────────────────────────────────────────────────
+
 interface TravelContextValue {
-  analysisResult: AnalysisResult | null;
-  baggageResult: BaggageAnalysis | null;
-  isLoading: boolean;
+  analysisResult:     AnalysisResult | null;
+  baggageResult:      BaggageAnalysis | null;
+  isLoading:          boolean;
   isBaggageAnalyzing: boolean;
-  error: string | null;
-  runAiSimulation: (formData: RawFormInput) => Promise<void>;
-  runBaggageAiSimulation: (
-    operator: Operator,
+  error:              string | null;
+  runAiSimulation:         (formData: RawFormInput) => Promise<void>;
+  runBaggageAiSimulation:  (
+    operator: Operator | string,
     dimensions?: BaggageDimensions,
     imageUrl?: string
   ) => Promise<BaggageAnalysis>;
-  reset: () => void;
 }
 
-const TravelContext = createContext<TravelContextValue | undefined>(undefined);
+// ─────────────────────────────────────────────────────────────
+// localStorage yardımcıları
+// ─────────────────────────────────────────────────────────────
 
-// ─────────────────────────────────────────────
-// Operator-specific risk/fee knowledge base
-// ─────────────────────────────────────────────
+const LS_KEYS = {
+  analysis: "ts_analysisResult_v1",
+  baggage:  "ts_baggageResult_v1",
+} as const;
 
-function generatePnr(): string {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let pnr = "";
-  for (let i = 0; i < 6; i++) {
-    pnr += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return pnr;
+function storageSave(key: string, value: unknown): void {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* quota */ }
 }
 
-function buildRisks(
-  form: RawFormInput,
-  checkInDeadline: string
-): RiskAlert[] {
-  const risks: RiskAlert[] = [];
-
-  const airlineRiskMaps: Record<Operator, RiskAlert[]> = {
-    RYANAIR: [
-      {
-        id: "risk_checkin",
-        level: "CRITICAL",
-        title: "Online check-in penceresi kapanıyor",
-        description: `Ryanair havalimanı check-in ücreti €55'tir. Check-in penceresi kalkıştan 24 saat önce açılır ve 2 saat önce kapanır. Son tarih: ${new Date(checkInDeadline).toLocaleString("tr-TR")}.`,
-        potentialFine: 55,
-        currency: "EUR",
-        actionLabel: "Check-in yap",
-        actionHref: "https://www.ryanair.com/checkin",
-      },
-      {
-        id: "risk_bag",
-        level: form.cabinBagIncluded ? "INFO" : "CRITICAL",
-        title: form.cabinBagIncluded
-          ? "Kabin bagajı dahil — boyut kontrolü önerilir"
-          : "Kabin bagajı dahil değil — kapıda ücret riski",
-        description: form.cabinBagIncluded
-          ? "Kabin bagajı biletinize dahil ancak Ryanair'in ücretsiz limiti 40×20×25 cm'dir. Boyutları aşarsanız kapıda €70 ücret kesilir."
-          : "Biletinizde kabin bagajı yok. Kapıda bagaj ücreti €70'e kadar çıkabilir. Şimdi online ekleyerek €25-35 tasarruf edebilirsiniz.",
-        potentialFine: form.cabinBagIncluded ? 70 : 70,
-        currency: "EUR",
-        actionLabel: "Bagaj boyutunu kontrol et",
-        actionHref: "/ar-sizer",
-      },
-      {
-        id: "risk_dark",
-        level: "INFO",
-        title: "Rezervasyon e-postasında dark pattern tespit edildi",
-        description:
-          "Onay e-postanızda 'Seyahat sigortası ekle' seçeneği önceden işaretlenmiş. Kalkıştan önce kontrol edin.",
-        potentialFine: 0,
-        currency: "EUR",
-      },
-    ],
-    WIZZAIR: [
-      {
-        id: "risk_bag_size",
-        level: form.cabinBagIncluded ? "WARNING" : "CRITICAL",
-        title: form.cabinBagIncluded
-          ? "Wizz Air bagaj boyut kontrolü çok katı"
-          : "Kabin bagajı dahil değil — kapıda ağır ceza",
-        description: form.cabinBagIncluded
-          ? "Wizz Air kabin bagajı boyut kontrolü agresif uygulanır (40×30×20 cm). 1 cm bile aşarsanız kapıda €45-80 arası ücret kesilir."
-          : "Biletinizde kabin bagajı yok. Kapıda bagaj kontrolünde €45-80 ceza kesilir. Önceden online ekleyin.",
-        potentialFine: 80,
-        currency: "EUR",
-      },
-      {
-        id: "risk_noshow",
-        level: "CRITICAL",
-        title: "Gidiş uçuşunu kaçırırsanız dönüş iptal edilir",
-        description:
-          "Wizz Air gidiş-dönüş biletlerde gidiş uçuşunu kaçıran yolcuların dönüş biletini otomatik iptal eder. Bu kural bilet koşullarında küçük puntolarla belirtilmiştir.",
-        potentialFine: 0,
-        currency: "EUR",
-      },
-      {
-        id: "risk_checkin_wz",
-        level: "WARNING",
-        title: "Online check-in'i kaçırmayın",
-        description:
-          "Wizz Air havalimanı check-in ücreti €30-35'tir. Kalkıştan 48 saat önce online check-in açılır.",
-        potentialFine: 35,
-        currency: "EUR",
-        actionLabel: "Wizz Air Check-in",
-        actionHref: "https://wizzair.com/check-in",
-      },
-    ],
-    EASYJET: [
-      {
-        id: "risk_fare",
-        level: "WARNING",
-        title: "Gece yarısı fare kuralı aktif",
-        description:
-          "EasyJet'te aynı gün yapılan koltuk değişikliklerinde yeni sefer daha uygun olsa bile fark iadesi yapılmıyor. 24 saatlik pencere içindeki değişikliklerde bilet bedeli tamamıyla kaybolabilir.",
-        potentialFine: 0,
-        currency: "EUR",
-      },
-      {
-        id: "risk_seat",
-        level: "INFO",
-        title: "Zorunlu gibi gösterilen koltuk seçim ücreti",
-        description:
-          "Check-in sürecinde koltuk seçimi zorunluymuş gibi sunulur ama ücretsiz rastgele koltuk atama hakkınız vardır.",
-        potentialFine: 20,
-        currency: "EUR",
-      },
-      {
-        id: "risk_bag_ej",
-        level: form.cabinBagIncluded ? "INFO" : "WARNING",
-        title: form.cabinBagIncluded
-          ? "Kabin bagajı dahil — EasyJet limitleri daha geniş"
-          : "Kabin bagajı dahil değil",
-        description: form.cabinBagIncluded
-          ? "EasyJet'in kabin bagajı limiti (56×45×25 cm) Ryanair'den büyüktür. Standart çanta genellikle sığar."
-          : "Biletinize kabin bagajı dahil değil. Online ekleme ücreti €25-42 arası, kapıda €48'e kadar çıkar.",
-        potentialFine: form.cabinBagIncluded ? 0 : 48,
-        currency: "EUR",
-      },
-    ],
-    TRENITALIA: [
-      {
-        id: "risk_norefund",
-        level: "CRITICAL",
-        title: "Esnetilemez bilet — değişiklik/iade yok",
-        description:
-          "Trenitalia 'Base' tarife biletleri hiçbir koşulda değiştirilemez veya iade edilemez. Sefer iptali bile tam iade garantisi vermez.",
-        potentialFine: 0,
-        currency: "EUR",
-      },
-      {
-        id: "risk_validate",
-        level: "WARNING",
-        title: "Biletin validasyonu zorunlu",
-        description:
-          "İstasyondaki sarı validasyon makinelerinde biletinizi doğrulatmanız gerekir. Doğrulatılmamış biletle yolculuk yaparsanız €50 ceza uygulanır.",
-        potentialFine: 50,
-        currency: "EUR",
-      },
-    ],
-    SNCF: [
-      {
-        id: "risk_sncf_exchange",
-        level: "WARNING",
-        title: "Değişim hakkı sınırlı",
-        description:
-          "SNCF 'Prem's' biletlerde değişim ücreti bilet bedelinin %50'sine kadar çıkabilir. Kalkıştan 3 gün önce değişiklik yapılmazsa tam bedel kaybedilir.",
-        potentialFine: 0,
-        currency: "EUR",
-      },
-    ],
-    DB: [
-      {
-        id: "risk_db_sparpreis",
-        level: "WARNING",
-        title: "Sparpreis bileti tren bağımlı",
-        description:
-          "Deutsche Bahn Sparpreis biletleri yalnızca belirtilen trende geçerlidir. Treni kaçırırsanız bilet geçersiz olur.",
-        potentialFine: 0,
-        currency: "EUR",
-      },
-    ],
-    OBB: [
-      {
-        id: "risk_obb",
-        level: "INFO",
-        title: "ÖBB Sparschiene kuralları",
-        description:
-          "ÖBB indirimli biletlerde değişim ücreti kalkıştan 1 gün önce €3, kalkış günü €15'tir.",
-        potentialFine: 15,
-        currency: "EUR",
-      },
-    ],
-    FLIXBUS: [
-      {
-        id: "risk_flix",
-        level: "INFO",
-        title: "FlixBus iptal ve değişim koşulları",
-        description:
-          "FlixBus biletleri kalkıştan 3 saat öncesine kadar ücretsiz değiştirilebilir. İptal halinde kupon kodu verilir, nakit iade yoktur.",
-        potentialFine: 0,
-        currency: "EUR",
-      },
-    ],
-  };
-
-  const operatorRisks = airlineRiskMaps[form.airline] ?? [];
-  risks.push(...operatorRisks);
-
-  return risks;
+function storageLoad<T>(key: string): T | null {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as T) : null;
+  } catch { return null; }
 }
 
-function buildFees(form: RawFormInput): FeeLineItem[] {
-  const feeMaps: Partial<Record<Operator, FeeLineItem[]>> = {
-    RYANAIR: [
-      { label: "Havalimanı check-in ücreti (Ryanair)", amount: 55, currency: "EUR", avoided: true },
-      { label: "Kapıda bagaj ücreti (boyut aşımı)", amount: 70, currency: "EUR", avoided: form.cabinBagIncluded },
-      { label: "Koltuk seçim ücreti", amount: 14, currency: "EUR", avoided: true },
-      { label: "Priority boarding ücreti", amount: 18, currency: "EUR", avoided: true },
-      { label: "Seyahat sigortası (ön-seçim)", amount: 12, currency: "EUR", avoided: true },
-    ],
-    WIZZAIR: [
-      { label: "Havalimanı check-in ücreti (Wizz Air)", amount: 35, currency: "EUR", avoided: true },
-      { label: "Kapıda bagaj ücreti", amount: 80, currency: "EUR", avoided: form.cabinBagIncluded },
-      { label: "Koltuk seçim ücreti", amount: 10, currency: "EUR", avoided: true },
-      { label: "Seyahat sigortası (ön-seçim)", amount: 15, currency: "EUR", avoided: true },
-    ],
-    EASYJET: [
-      { label: "Koltuk seçim ücreti (EasyJet)", amount: 20, currency: "EUR", avoided: true },
-      { label: "Kapıda bagaj ek ücreti", amount: 48, currency: "EUR", avoided: form.cabinBagIncluded },
-      { label: "Fare farkı riski", amount: 35, currency: "EUR", avoided: true },
-    ],
-    TRENITALIA: [
-      { label: "Validasyon cezası", amount: 50, currency: "EUR", avoided: true },
-      { label: "Değişim/iade kaybı", amount: 0, currency: "EUR", avoided: false },
-    ],
-  };
+// ─────────────────────────────────────────────────────────────
+// Havayolu veri katmanı (tek sorumluluk)
+// ─────────────────────────────────────────────────────────────
 
-  return feeMaps[form.airline] ?? [
-    { label: "Standart ücret kontrolü", amount: 0, currency: "EUR", avoided: true },
-  ];
+/** Havayoluna göre kabin boyut limitleri ve kapı ücreti */
+const CABIN_LIMITS: Record<string, BaggageDimensions & { gateFee: number }> = {
+  THY:        { widthCm: 55, heightCm: 40, depthCm: 20, gateFee: 0  },
+  PEGASUS:    { widthCm: 55, heightCm: 40, depthCm: 20, gateFee: 50 },
+  AJET:       { widthCm: 55, heightCm: 40, depthCm: 20, gateFee: 45 },
+  SUNEXPRESS: { widthCm: 55, heightCm: 40, depthCm: 20, gateFee: 45 },
+  CORENDON:   { widthCm: 55, heightCm: 40, depthCm: 20, gateFee: 40 },
+  RYANAIR:    { widthCm: 40, heightCm: 20, depthCm: 25, gateFee: 70 },
+  WIZZAIR:    { widthCm: 40, heightCm: 30, depthCm: 20, gateFee: 80 },
+  EASYJET:    { widthCm: 56, heightCm: 45, depthCm: 25, gateFee: 48 },
+  TRENITALIA: { widthCm: 80, heightCm: 50, depthCm: 30, gateFee: 0  },
+  SNCF:       { widthCm: 70, heightCm: 50, depthCm: 30, gateFee: 0  },
+  DB:         { widthCm: 70, heightCm: 50, depthCm: 30, gateFee: 0  },
+  OBB:        { widthCm: 70, heightCm: 50, depthCm: 30, gateFee: 0  },
+  FLIXBUS:    { widthCm: 67, heightCm: 42, depthCm: 27, gateFee: 0  },
+};
+
+function getCabinLimits(operator: string) {
+  return CABIN_LIMITS[operator.toUpperCase()] ?? CABIN_LIMITS["RYANAIR"];
 }
 
-function buildSavings(fees: FeeLineItem[]): {
-  totalSaved: number;
-  currency: string;
-  breakdown: SavingsBreakdown[];
-} {
-  const avoided = fees.filter((f) => f.avoided && f.amount > 0);
-  const breakdown: SavingsBreakdown[] = avoided.map((f) => ({
-    category: `${f.label} engellendi`,
-    originalCost: f.amount,
-    savedAmount: f.amount,
-    currency: f.currency,
+/** Havayoluna göre risk uyarıları */
+const AIRLINE_RISKS: Record<string, Omit<RiskAlert, "id">[]> = {
+  RYANAIR: [
+    {
+      level: "CRITICAL",
+      title: "Online check-in penceresi 2 saatte kapanıyor",
+      description: "Ryanair havalimanı check-in için €55 ceza uygular.",
+      potentialFine: 55, currency: "EUR",
+      actionLabel: "Şimdi check-in yap",
+      actionHref:  "https://www.ryanair.com/checkin",
+    },
+    {
+      level: "WARNING",
+      title: "El bagajı boyut limitini aşıyor olabilir",
+      description: "Ryanair'in ücretsiz limiti 40×20×25 cm. Kapıda €70 ceza riski.",
+      potentialFine: 70, currency: "EUR",
+      actionLabel: "AR ile ölç",
+      actionHref:  "/analyze?tab=baggage",
+    },
+    {
+      level: "INFO",
+      title: "Dark pattern: ön seçili sigorta",
+      description: "Onay e-postasında seyahat sigortası önceden işaretli olabilir.",
+      potentialFine: 0, currency: "EUR",
+    },
+  ],
+  WIZZAIR: [
+    {
+      level: "CRITICAL",
+      title: "Havalimanı check-in ücreti",
+      description: "Online check-in yapılmazsa €30–50 ücret uygulanır.",
+      potentialFine: 50, currency: "EUR",
+    },
+    {
+      level: "CRITICAL",
+      title: "Gidiş kaçırılırsa dönüş otomatik iptal",
+      description: "Gidiş-dönüş biletlerde gidiş kaçırılırsa dönüş iptal edilir.",
+      potentialFine: 0, currency: "EUR",
+    },
+    {
+      level: "WARNING",
+      title: "Bagaj boyut kontrolü çok katı",
+      description: "40×30×20 cm limiti havalimanında ölçülür. 1 cm aşımda €45–80 ceza.",
+      potentialFine: 80, currency: "EUR",
+    },
+  ],
+  EASYJET: [
+    {
+      level: "WARNING",
+      title: "Zorunluymuş gibi gösterilen koltuk seçimi",
+      description: "Check-in sürecinde koltuk seçimi zorunluymuş gibi sunulur.",
+      potentialFine: 20, currency: "EUR",
+    },
+    {
+      level: "INFO",
+      title: "Gece yarısı kural değişikliği",
+      description: "Aynı gün seferde koltuk değişikliğinde fark iadesi yapılmaz.",
+      potentialFine: 0, currency: "EUR",
+    },
+  ],
+  THY: [
+    {
+      level: "INFO",
+      title: "Economy Lite: koltuk seçimi ücretli",
+      description: "Economy Lite biletlerde koltuk seçimi ek ücretlidir.",
+      potentialFine: 15, currency: "EUR",
+    },
+    {
+      level: "INFO",
+      title: "İkinci bagaj ek ücreti",
+      description: "İkinci bagaj için ek ücret uygulanabilir.",
+      potentialFine: 30, currency: "EUR",
+    },
+  ],
+  PEGASUS: [
+    {
+      level: "WARNING",
+      title: "Economy Eco: kabin bagajı dahil değil",
+      description: "Economy Eco biletlerde kabin bagajı dahil değildir (€20–40).",
+      potentialFine: 40, currency: "EUR",
+    },
+    {
+      level: "WARNING",
+      title: "Havalimanı check-in ücreti",
+      description: "Havalimanında check-in yapılırsa €25 ücret alınır.",
+      potentialFine: 25, currency: "EUR",
+    },
+  ],
+  AJET:       [{ level: "INFO", title: "AJet kabin bagajı politikası", description: "Kabin limitleri standart LCC kurallarını takip eder.", potentialFine: 0, currency: "EUR" }],
+  SUNEXPRESS: [{ level: "INFO", title: "Koltuk seçim ücreti", description: "Standart biletlerde koltuk seçimi ek ücretlidir.", potentialFine: 10, currency: "EUR" }],
+  CORENDON:   [{ level: "INFO", title: "Büyük kabin bagajı ücretli olabilir", description: "Küçük el çantası ücretsiz; büyük kabin bagajı bilet tipine göre ücretli.", potentialFine: 20, currency: "EUR" }],
+};
+
+function getRisksForOperator(operator: string): Omit<RiskAlert, "id">[] {
+  return AIRLINE_RISKS[operator.toUpperCase()] ?? AIRLINE_RISKS["RYANAIR"];
+}
+
+// ─────────────────────────────────────────────────────────────
+// Simülasyon motoru (tek sorumluluk)
+// ─────────────────────────────────────────────────────────────
+
+/** Bilet analizi için simüle AnalysisResult üretir */
+function buildAnalysisResult(
+  formData: RawFormInput,
+  existingBaggage: BaggageAnalysis | null
+): AnalysisResult {
+  const op     = formData.airline.toUpperCase();
+  const rawRisks = getRisksForOperator(op);
+  const risks: RiskAlert[] = rawRisks.map((r, i) => ({
+    ...r,
+    id: `risk_${Date.now()}_${i}`,
   }));
-  const totalSaved = breakdown.reduce((sum, b) => sum + b.savedAmount, 0);
-  return { totalSaved, currency: "EUR", breakdown };
-}
 
-function buildAlternatives(form: RawFormInput): AlternativeTransport[] {
-  const alts: AlternativeTransport[] = [];
+  const fees: FeeLineItem[] = risks
+    .filter((r) => r.potentialFine > 0)
+    .map((r) => ({
+      label:   r.title,
+      amount:  r.potentialFine,
+      currency: r.currency,
+      avoided: r.level !== "CRITICAL",
+    }));
 
-  // Always suggest FlixBus as budget alternative
-  if (form.transportType === "FLIGHT") {
-    alts.push({
-      id: "alt_bus",
-      operator: "FLIXBUS",
-      mode: "BUS",
-      origin: form.origin,
-      destination: form.destination,
-      departureTime: new Date(
-        new Date(form.date).getTime() + 1000 * 60 * 60 * 8
-      ).toISOString(),
-      price: 29 + Math.floor(Math.random() * 20),
-      currency: "EUR",
-      savings: 50 + Math.floor(Math.random() * 40),
+  const savedAmount = fees
+    .filter((f) => f.avoided)
+    .reduce((sum, f) => sum + Math.round(f.amount * 0.9), 0);
+
+  const departure = formData.date
+    ? new Date(formData.date)
+    : new Date(Date.now() + 18 * 3_600_000);
+
+  return {
+    id:          `analysis_${Date.now()}`,
+    analyzedAt:  new Date().toISOString(),
+    segment: {
+      pnr:              `TS${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
+      operator:         formData.airline,
+      mode:             formData.transportType,
+      origin:           formData.origin      || "IST",
+      destination:      formData.destination || "BCN",
+      departureTime:    departure.toISOString(),
+      arrivalTime:      new Date(departure.getTime() + 3 * 3_600_000).toISOString(),
+      checkInDeadline:  new Date(departure.getTime() - 2 * 3_600_000).toISOString(),
+      validationRequired: formData.transportType === "TRAIN",
+    },
+    risks,
+    savings: {
+      totalSaved: savedAmount,
+      currency:   "EUR",
+      breakdown:  fees
+        .filter((f) => f.avoided)
+        .map((f) => ({
+          category:    f.label,
+          originalCost: f.amount,
+          savedAmount:  Math.round(f.amount * 0.9),
+          currency:    f.currency,
+        })),
+    },
+    alternatives: [{
+      id:            `alt_${Date.now()}`,
+      operator:      "FLIXBUS",
+      mode:          "BUS",
+      origin:        formData.origin      || "IST",
+      destination:   formData.destination || "BCN",
+      departureTime: new Date(departure.getTime() + 4 * 3_600_000).toISOString(),
+      price: 39, currency: "EUR", savings: 86,
       bookingUrl: "https://www.flixbus.com",
-      tags: ["Bagaj ücretsiz", "Ücretsiz iptal"],
-    });
-  }
-
-  // Suggest alternative airline
-  const altAirlines: Partial<Record<Operator, Operator>> = {
-    RYANAIR: "EASYJET",
-    WIZZAIR: "RYANAIR",
-    EASYJET: "WIZZAIR",
+      tags: ["Bagaj ücreti yok", "Ücretsiz iptal"],
+    }],
+    fees,
+    baggageAnalysis: existingBaggage ?? undefined,
   };
-
-  const altOp = altAirlines[form.airline];
-  if (altOp) {
-    const bookingUrls: Partial<Record<Operator, string>> = {
-      EASYJET: "https://www.easyjet.com",
-      RYANAIR: "https://www.ryanair.com",
-      WIZZAIR: "https://wizzair.com",
-    };
-    alts.push({
-      id: "alt_flight",
-      operator: altOp,
-      mode: "FLIGHT",
-      origin: form.origin,
-      destination: form.destination,
-      departureTime: new Date(
-        new Date(form.date).getTime() + 1000 * 60 * 60 * 12
-      ).toISOString(),
-      price: 59 + Math.floor(Math.random() * 50),
-      currency: "EUR",
-      savings: 15 + Math.floor(Math.random() * 30),
-      bookingUrl: bookingUrls[altOp] ?? "#",
-      tags: ["Daha geniş kabin limiti", "Farklı saatler"],
-    });
-  }
-
-  // Suggest train if applicable
-  if (form.transportType === "FLIGHT") {
-    alts.push({
-      id: "alt_train",
-      operator: "TRENITALIA",
-      mode: "TRAIN",
-      origin: form.origin,
-      destination: form.destination,
-      departureTime: new Date(
-        new Date(form.date).getTime() + 1000 * 60 * 60 * 6
-      ).toISOString(),
-      price: 45 + Math.floor(Math.random() * 30),
-      currency: "EUR",
-      savings: 30 + Math.floor(Math.random() * 25),
-      tags: ["Bagaj sınırsız", "Şehir merkezinden kalkış"],
-    });
-  }
-
-  return alts;
 }
 
-function getAirlineBaggageLimit(operator: Operator): BaggageDimensions {
-  const limits: Record<Operator, BaggageDimensions> = {
-    RYANAIR: { widthCm: 40, heightCm: 20, depthCm: 25 },
-    WIZZAIR: { widthCm: 40, heightCm: 30, depthCm: 20 },
-    EASYJET: { widthCm: 56, heightCm: 45, depthCm: 25 },
-    TRENITALIA: { widthCm: 80, heightCm: 50, depthCm: 30 },
-    SNCF: { widthCm: 70, heightCm: 50, depthCm: 30 },
-    DB: { widthCm: 70, heightCm: 50, depthCm: 30 },
-    OBB: { widthCm: 70, heightCm: 50, depthCm: 30 },
-    FLIXBUS: { widthCm: 67, heightCm: 42, depthCm: 27 },
+/** Bagaj analizi için simüle BaggageAnalysis üretir */
+function buildBaggageResult(
+  operator: string,
+  dimensions?: BaggageDimensions,
+  imageUrl?: string
+): BaggageAnalysis {
+  const limits = getCabinLimits(operator);
+
+  const detected: BaggageDimensions = dimensions ?? {
+    widthCm:  limits.widthCm  + 2,
+    heightCm: limits.heightCm + 2,
+    depthCm:  limits.depthCm,
   };
-  return limits[operator] || { widthCm: 40, heightCm: 20, depthCm: 25 };
+
+  const ow = Math.max(0, detected.widthCm  - limits.widthCm);
+  const oh = Math.max(0, detected.heightCm - limits.heightCm);
+  const od = Math.max(0, detected.depthCm  - limits.depthCm);
+
+  const isOversized = ow > 0 || oh > 0 || od > 0;
+  const gateFee     = isOversized ? limits.gateFee : 0;
+  const netSavings  = gateFee > 0 ? gateFee - 18 : 0;
+
+  const recommendations: string[] = isOversized
+    ? [
+        `Çantanız ${operator} kabin limitini (${limits.widthCm}×${limits.heightCm}×${limits.depthCm} cm) aşıyor.`,
+        ...(gateFee > 0
+          ? [`Kapıda €${gateFee} ceza ödememek için €18'e online kabin hakkı ekleyin → €${netSavings} tasarruf.`]
+          : []),
+        "Çantanızı sıkıştırarak birkaç cm küçültmeyi deneyin.",
+      ]
+    : [`Çantanız ${operator} kabin limitlari içinde — tamamen güvenli.`];
+
+  return {
+    id:              `baggage_${Date.now()}`,
+    status:          isOversized ? "OVERSIZED" : "COMPLIANT",
+    detectedDimensions: detected,
+    allowedDimensions: { widthCm: limits.widthCm, heightCm: limits.heightCm, depthCm: limits.depthCm },
+    overageCm:       { width: ow, height: oh, depth: od },
+    potentialGateFee: gateFee,
+    currency:        "EUR",
+    confidenceScore: dimensions ? 0.95 : 0.85,
+    imageUrl,
+    recommendations,
+  };
 }
 
-// ─────────────────────────────────────────────
-// Provider component
-// ─────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// Simülasyon gecikmeleri (ms)
+// ─────────────────────────────────────────────────────────────
+const SIMULATION_DELAY_MS = {
+  ticket:  2600,  // Person Y'nin animasyonu ile senkron
+  baggage: 1800,  // Vision AI bekleme süresi
+} as const;
+
+// ─────────────────────────────────────────────────────────────
+// Context
+// ─────────────────────────────────────────────────────────────
+
+const TravelContext = createContext<TravelContextValue>({
+  analysisResult:     null,
+  baggageResult:      null,
+  isLoading:          false,
+  isBaggageAnalyzing: false,
+  error:              null,
+  runAiSimulation:        async () => {},
+  runBaggageAiSimulation: async () => ({} as BaggageAnalysis),
+});
+
+// ─────────────────────────────────────────────────────────────
+// Provider
+// ─────────────────────────────────────────────────────────────
+
 export function TravelProvider({ children }: { children: ReactNode }) {
-  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(
-    null
-  );
-  const [baggageResult, setBaggageResult] = useState<BaggageAnalysis | null>(
-    null
-  );
-  const [isLoading, setIsLoading] = useState(false);
+  const [analysisResult,     setAnalysisResult]     = useState<AnalysisResult | null>(null);
+  const [baggageResult,      setBaggageResult]       = useState<BaggageAnalysis | null>(null);
+  const [isLoading,          setIsLoading]           = useState(false);
   const [isBaggageAnalyzing, setIsBaggageAnalyzing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error,              setError]              = useState<string | null>(null);
 
-  // Restore state from localStorage if available
+  // Client-side localStorage hydration
   useEffect(() => {
-    try {
-      const savedBaggage = localStorage.getItem("ts_baggage_result");
-      if (savedBaggage) {
-        setBaggageResult(JSON.parse(savedBaggage));
-      }
-      const savedAnalysis = localStorage.getItem("ts_analysis_result");
-      if (savedAnalysis) {
-        setAnalysisResult(JSON.parse(savedAnalysis));
-      }
-    } catch {
-      // Ignore localStorage errors
-    }
+    const savedAnalysis = storageLoad<AnalysisResult>(LS_KEYS.analysis);
+    const savedBaggage  = storageLoad<BaggageAnalysis>(LS_KEYS.baggage);
+    if (savedAnalysis) setAnalysisResult(savedAnalysis);
+    if (savedBaggage)  setBaggageResult(savedBaggage);
   }, []);
 
+  // ── Bilet analiz simülasyonu ─────────────────────────────
+  const runAiSimulation = useCallback(async (formData: RawFormInput) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      await new Promise((resolve) => setTimeout(resolve, SIMULATION_DELAY_MS.ticket));
+
+      const result = buildAnalysisResult(formData, baggageResult);
+      setAnalysisResult(result);
+      storageSave(LS_KEYS.analysis, result);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Analiz başarısız oldu.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [baggageResult]);
+
+  // ── Bagaj AI simülasyonu ─────────────────────────────────
   const runBaggageAiSimulation = useCallback(
     async (
-      operator: Operator,
+      operator: Operator | string,
       dimensions?: BaggageDimensions,
       imageUrl?: string
     ): Promise<BaggageAnalysis> => {
       setIsBaggageAnalyzing(true);
-      setError(null);
 
       try {
-        await new Promise((resolve) => setTimeout(resolve, 1800));
+        await new Promise((resolve) => setTimeout(resolve, SIMULATION_DELAY_MS.baggage));
 
-        const allowed = getAirlineBaggageLimit(operator);
-        // Default to Ahmet's Hero Story bag (42x22x25 cm) for Ryanair if unspecified
-        const detected = dimensions || {
-          widthCm: allowed.widthCm + 2,
-          heightCm: allowed.heightCm + 2,
-          depthCm: allowed.depthCm,
-        };
-
-        const overage = {
-          width: Math.max(0, detected.widthCm - allowed.widthCm),
-          height: Math.max(0, detected.heightCm - allowed.heightCm),
-          depth: Math.max(0, detected.depthCm - allowed.depthCm),
-        };
-
-        const isOversized = overage.width > 0 || overage.height > 0 || overage.depth > 0;
-        const gateFee = operator === "RYANAIR" ? 70 : operator === "WIZZAIR" ? 80 : 48;
-
-        const result: BaggageAnalysis = {
-          id: `bag_${Date.now()}`,
-          status: isOversized ? "OVERSIZED" : "COMPLIANT",
-          detectedDimensions: detected,
-          allowedDimensions: allowed,
-          overageCm: overage,
-          potentialGateFee: isOversized ? gateFee : 0,
-          currency: "EUR",
-          confidenceScore: 0.94,
-          imageUrl: imageUrl || "/images/sample_bag.jpg",
-          recommendations: isOversized
-            ? [
-                `Çantanız ${operator} kabin limitlerini (${allowed.widthCm}×${allowed.heightCm}×${allowed.depthCm} cm) aşıyor.`,
-                `Kapıda €${gateFee} ceza ödememek için şimdi €18'e online kabin yükseltmesi ekleyin (€52 net tasarruf).`,
-                "Çantanızı yumuşak malzemeyse sıkıştırarak koruma limitine sokabilirsiniz.",
-              ]
-            : ["Çantanız kabin limitleri içerisinde tamamen güvenli."],
-        };
-
+        const result = buildBaggageResult(operator as string, dimensions, imageUrl);
         setBaggageResult(result);
-        try {
-          localStorage.setItem("ts_baggage_result", JSON.stringify(result));
-        } catch {
-          // Ignore storage write error
-        }
+        storageSave(LS_KEYS.baggage, result);
         return result;
       } finally {
         setIsBaggageAnalyzing(false);
@@ -469,97 +408,6 @@ export function TravelProvider({ children }: { children: ReactNode }) {
     },
     []
   );
-
-  const runAiSimulation = useCallback(
-    async (formData: RawFormInput): Promise<void> => {
-      setIsLoading(true);
-      setError(null);
-      setAnalysisResult(null);
-
-      try {
-        // Simulate AI processing — synced with Person Y's
-        // letter-by-letter scanning animation (~2.6s)
-        await new Promise((resolve) => setTimeout(resolve, 2600));
-
-        const now = new Date();
-        const departureDate = new Date(formData.date);
-        departureDate.setHours(
-          6 + Math.floor(Math.random() * 14),
-          Math.floor(Math.random() * 60)
-        );
-
-        const arrivalDate = new Date(
-          departureDate.getTime() + 1000 * 60 * 60 * (2 + Math.random() * 4)
-        );
-
-        const checkInDeadline = new Date(
-          departureDate.getTime() - 1000 * 60 * 60 * 2
-        ).toISOString();
-
-        const needsValidation =
-          formData.airline === "TRENITALIA" ||
-          formData.airline === "DB" ||
-          formData.airline === "OBB";
-
-        const risks = buildRisks(formData, checkInDeadline);
-        const fees = buildFees(formData);
-        const savings = buildSavings(fees);
-        const alternatives = buildAlternatives(formData);
-
-        const result: AnalysisResult = {
-          id: `analysis_${Date.now()}`,
-          analyzedAt: now.toISOString(),
-          segment: {
-            pnr: generatePnr(),
-            operator: formData.airline,
-            mode: formData.transportType,
-            origin: formData.origin,
-            destination: formData.destination,
-            departureTime: departureDate.toISOString(),
-            arrivalTime: arrivalDate.toISOString(),
-            checkInDeadline:
-              formData.transportType === "FLIGHT"
-                ? checkInDeadline
-                : undefined,
-            validationRequired: needsValidation,
-          },
-          risks,
-          savings,
-          alternatives,
-          fees,
-          baggageAnalysis: baggageResult || undefined,
-        };
-
-        setAnalysisResult(result);
-        try {
-          localStorage.setItem("ts_analysis_result", JSON.stringify(result));
-        } catch {
-          // Ignore
-        }
-      } catch (err) {
-        const message =
-          err instanceof Error ? err.message : "Bilinmeyen bir hata oluştu";
-        setError(message);
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [baggageResult]
-  );
-
-  const reset = useCallback(() => {
-    setAnalysisResult(null);
-    setBaggageResult(null);
-    setIsLoading(false);
-    setIsBaggageAnalyzing(false);
-    setError(null);
-    try {
-      localStorage.removeItem("ts_baggage_result");
-      localStorage.removeItem("ts_analysis_result");
-    } catch {
-      // Ignore
-    }
-  }, []);
 
   return (
     <TravelContext.Provider
@@ -571,7 +419,6 @@ export function TravelProvider({ children }: { children: ReactNode }) {
         error,
         runAiSimulation,
         runBaggageAiSimulation,
-        reset,
       }}
     >
       {children}
@@ -579,16 +426,14 @@ export function TravelProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// ─────────────────────────────────────────────
-// Consumer hook
-// ─────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// Hook
+// ─────────────────────────────────────────────────────────────
+
 export function useTravel(): TravelContextValue {
-  const ctx = useContext(TravelContext);
-  if (!ctx) {
-    throw new Error(
-      "useTravel() must be used within a <TravelProvider>. " +
-        "Wrap your layout with TravelProvider in src/app/layout.tsx."
-    );
+  const context = useContext(TravelContext);
+  if (!context) {
+    throw new Error("useTravel — TravelProvider dışında kullanılamaz.");
   }
-  return ctx;
+  return context;
 }

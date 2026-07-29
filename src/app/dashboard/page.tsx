@@ -1,5 +1,12 @@
 // ─────────────────────────────────────────────────────────────
 // src/app/dashboard/page.tsx
+// SPRINT FINAL-personM:
+//   ✅ Yasal Uyarı banner eklendi (footer + modal)
+//   ✅ DashboardClientWrapper korundu
+//   ✅ Server Component mimarisi korundu
+// ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// src/app/dashboard/page.tsx
 // SPRINT 3 DEĞIŞIKLIKLERI:
 //   ❌ KALDIRILDI: Doğrudan kart import'ları ve useTravel çağrısı
 //   ✅ EKLENDİ   : DashboardClientWrapper — tüm mantık orada
@@ -14,23 +21,34 @@
 //     Client Component (Wrapper) → context'i okur, merge eder
 // ─────────────────────────────────────────────────────────────
 
-import { DashboardClientWrapper, DashboardNav } from "@/components/dashboard/DashboardClientWrapper";
+import type { Metadata } from "next";
+import {
+  DashboardClientWrapper,
+  DashboardNav,
+} from "@/components/dashboard/DashboardClientWrapper";
 import { MOCK_ANALYSIS } from "@/lib/mock-analysis";
+import LegalDisclaimer from "@/components/dashboard/LegalDisclaimer";
+
+export const metadata: Metadata = {
+  title: "Analiz Sonuçları | Travel Shield",
+  description:
+    "Yapay zeka destekli seyahat bilet ve bagaj analizi sonuçlarınızı görüntüleyin.",
+};
 
 export default async function DashboardPage() {
-  // Server tarafında initial/fallback veriyi hazırla.
-  // Gerçek backend geldiğinde burada fetch() yapılır.
   const initialAnalysis = MOCK_ANALYSIS;
 
   return (
     <div className="min-h-screen bg-slate-950">
-      {/* Nav — client component içinden export edildi */}
       <DashboardNav />
 
-      {/* Ana içerik — tüm mantık wrapper'da */}
       <main className="mx-auto max-w-3xl px-4 py-6">
         <DashboardClientWrapper initialAnalysis={initialAnalysis} />
+
+        {/* ── Yasal Uyarı (Sprint Final) ── */}
+        <LegalDisclaimer />
       </main>
     </div>
   );
 }
+
