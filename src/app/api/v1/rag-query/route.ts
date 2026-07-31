@@ -109,11 +109,30 @@ const POLICIES: PolicyChunk[] = [
   },
 ];
 
+const OPERATOR_ALIASES: Record<string, string> = {
+  wizz: "WIZZAIR", wizzair: "WIZZAIR",
+  thy: "THY", turkish: "THY", "türk hava": "THY",
+  pegasus: "PEGASUS", flypgs: "PEGASUS", flypegasus: "PEGASUS",
+  ajet: "AJET", anadolu: "AJET",
+  sunexpress: "SUNEXPRESS", sunx: "SUNEXPRESS",
+  corendon: "CORENDON",
+  ryanair: "RYANAIR", ryr: "RYANAIR",
+  easyjet: "EASYJET", ezy: "EASYJET",
+  trenitalia: "TRENITALIA",
+};
+
+function detectOperatorInQuery(query: string): string {
+  const q = query.toLowerCase();
+  for (const [alias, code] of Object.entries(OPERATOR_ALIASES)) {
+    if (q.includes(alias)) return code;
+  }
+  return "";
+}
+
 export async function POST(req: Request) {
   try {
     const { query, operator } = await req.json();
     const qRaw = String(query || "").trim();
-    const opClean = String(operator || "").toUpperCase();
 
     if (!qRaw) {
       return NextResponse.json({ error: "Sorgu boş olamaz." }, { status: 400 });
@@ -122,8 +141,18 @@ export async function POST(req: Request) {
     const qLower = qRaw.toLowerCase();
     const qTokens = qLower.replace(/[^\w\sğüşıöçĞÜŞİÖÇ]/g, "").split(/\s+/).filter(t => t.length > 1);
 
+    // Etkin operatör: önce sorgu metninde geçen havayolu, yoksa dropdown seçimi.
+    const opClean = detectOperatorInQuery(qRaw) || String(operator || "").toUpperCase();
+
+    // Operatör biliniyorsa retrieval'ı yalnızca o havayolunun maddeleriyle sınırla;
+    // aksi halde başka havayollarının kuralları contexte ve atıflara sızıyor.
+    const searchPool = opClean
+      ? POLICIES.filter(i => i.operator.toUpperCase() === opClean)
+      : POLICIES;
+    const pool = searchPool.length > 0 ? searchPool : POLICIES;
+
     // Retrieval scoring
-    const scored = POLICIES.map(item => {
+    const scored = pool.map(item => {
       let score = 0;
       const itemOp = item.operator.toUpperCase();
 
@@ -153,7 +182,7 @@ export async function POST(req: Request) {
     const topMatches = scored.filter(s => s.score > 0).map(s => s.item);
     const chunks = topMatches.length > 0
       ? topMatches.slice(0, 3)
-      : POLICIES.filter(i => i.operator === opClean || i.operator === "THY").slice(0, 2);
+      : pool.slice(0, 2);
 
     const citations = chunks.map(c => `${c.operator} - ${c.clause_ref}: ${c.title}`);
 

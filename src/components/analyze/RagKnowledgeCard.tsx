@@ -138,12 +138,39 @@ const LOCAL_KNOWLEDGE_BASE: PolicyChunk[] = [
   },
 ];
 
+const OPERATOR_ALIASES: Record<string, string> = {
+  wizz: "WIZZAIR", wizzair: "WIZZAIR",
+  thy: "THY", turkish: "THY", "türk hava": "THY",
+  pegasus: "PEGASUS", flypgs: "PEGASUS", flypegasus: "PEGASUS",
+  ajet: "AJET", anadolu: "AJET",
+  sunexpress: "SUNEXPRESS", sunx: "SUNEXPRESS",
+  corendon: "CORENDON",
+  ryanair: "RYANAIR", ryr: "RYANAIR",
+  easyjet: "EASYJET", ezy: "EASYJET",
+  trenitalia: "TRENITALIA",
+};
+
+function detectOperatorInQuery(query: string): string {
+  const q = query.toLowerCase();
+  for (const [alias, code] of Object.entries(OPERATOR_ALIASES)) {
+    if (q.includes(alias)) return code;
+  }
+  return "";
+}
+
 function getLocalRagFallback(searchQuery: string, searchOp: string): RagResponse {
-  const opClean = searchOp.toUpperCase();
+  // Etkin operatör: önce sorgu metnindeki havayolu, yoksa dropdown seçimi.
+  const opClean = detectOperatorInQuery(searchQuery) || searchOp.toUpperCase();
   const qLower = searchQuery.toLowerCase();
   const qTokens = qLower.replace(/[^\w\sğüşıöçĞÜŞİÖÇ]/g, "").split(/\s+/).filter((t) => t.length > 1);
 
-  const scored = LOCAL_KNOWLEDGE_BASE.map((item) => {
+  // Operatör biliniyorsa yalnızca o havayolunun maddeleri içinde ara.
+  const searchPool = opClean
+    ? LOCAL_KNOWLEDGE_BASE.filter((i) => i.operator.toUpperCase() === opClean)
+    : LOCAL_KNOWLEDGE_BASE;
+  const pool = searchPool.length > 0 ? searchPool : LOCAL_KNOWLEDGE_BASE;
+
+  const scored = pool.map((item) => {
     let score = 0;
     const itemOp = item.operator.toUpperCase();
     if (opClean && (itemOp === opClean || item.title.toUpperCase().includes(opClean))) {
@@ -175,7 +202,7 @@ function getLocalRagFallback(searchQuery: string, searchOp: string): RagResponse
   const topItems = scored.filter((s) => s.score > 0).map((s) => s.item);
   const chunks = topItems.length > 0
     ? topItems.slice(0, 3)
-    : LOCAL_KNOWLEDGE_BASE.filter((i) => i.operator === opClean || i.operator === "THY").slice(0, 2);
+    : pool.slice(0, 2);
 
   const citations = chunks.map((c) => `${c.operator} - ${c.clause_ref}: ${c.title}`);
   

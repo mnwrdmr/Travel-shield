@@ -60,6 +60,28 @@ def _load_knowledge_base():
 # Başlangıçta bir kez yükle
 _load_knowledge_base()
 
+# Sorgu metninde geçen havayolu adını operatör koduna eşler.
+_OPERATOR_ALIASES: dict[str, str] = {
+    "wizz": "WIZZAIR", "wizzair": "WIZZAIR",
+    "thy": "THY", "turkish": "THY", "türk hava": "THY",
+    "pegasus": "PEGASUS", "flypgs": "PEGASUS", "flypegasus": "PEGASUS",
+    "ajet": "AJET", "anadolu": "AJET",
+    "sunexpress": "SUNEXPRESS", "sunx": "SUNEXPRESS",
+    "corendon": "CORENDON",
+    "ryanair": "RYANAIR", "ryr": "RYANAIR",
+    "easyjet": "EASYJET", "ezy": "EASYJET",
+    "trenitalia": "TRENITALIA",
+}
+
+
+def _detect_operator_in_query(query: str) -> str:
+    """Sorgu metninde açıkça geçen bir havayolu varsa onun kodunu döndürür."""
+    q = query.lower()
+    for alias, code in _OPERATOR_ALIASES.items():
+        if alias in q:
+            return code
+    return ""
+
 
 def retrieve_policy_chunks(query: str, operator: str = "", top_k: int = 3) -> List[PolicyChunk]:
     """Sorgu ve operatör adına göre bilgi tabanından en alakalı kural maddelerini skorlar ve çeker."""
@@ -67,12 +89,19 @@ def retrieve_policy_chunks(query: str, operator: str = "", top_k: int = 3) -> Li
     if not _KNOWLEDGE_BASE:
         return []
 
-    op_clean = operator.strip().upper()
+    # Etkin operatör: önce sorgu metninde geçen havayolu, yoksa dropdown seçimi.
+    op_clean = _detect_operator_in_query(query) or operator.strip().upper()
     query_tokens = set(re.findall(r"\w+", query.lower()))
+
+    # Operatör biliniyorsa retrieval'ı YALNIZCA o havayolunun maddeleriyle sınırla;
+    # böylece başka havayollarının kuralları LLM contextine ve atıflara sızmaz.
+    search_pool = [it for it in _KNOWLEDGE_BASE if it.get("operator", "").upper() == op_clean] if op_clean else []
+    if not search_pool:
+        search_pool = _KNOWLEDGE_BASE  # bilinmeyen/boş operatör → genel arama
 
     scored_items: List[tuple[float, dict]] = []
 
-    for item in _KNOWLEDGE_BASE:
+    for item in search_pool:
         score = 0.0
         item_op = item.get("operator", "").upper()
         
