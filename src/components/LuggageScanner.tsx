@@ -70,6 +70,55 @@ function isAllowedMimeType(type: string): boolean {
   return ALLOWED_MIME_TYPES.has(type);
 }
 
+// ─── Airline cabin limits for mock fallback ──────────────────
+
+const CABIN_LIMITS_MOCK: Record<string, { w: number; h: number; d: number; fee: number }> = {
+  RYANAIR:    { w: 40, h: 20, d: 25, fee: 70 },
+  WIZZAIR:    { w: 40, h: 30, d: 20, fee: 80 },
+  EASYJET:    { w: 56, h: 45, d: 25, fee: 48 },
+  THY:        { w: 55, h: 23, d: 40, fee: 60 },
+  PEGASUS:    { w: 55, h: 20, d: 40, fee: 50 },
+  AJET:       { w: 55, h: 20, d: 40, fee: 50 },
+  SUNEXPRESS: { w: 55, h: 20, d: 40, fee: 45 },
+  CORENDON:   { w: 55, h: 20, d: 40, fee: 45 },
+};
+
+/** Generates a realistic mock scan result when backend is unavailable */
+function generateMockScanResult(operator: string): BackendScanResponse {
+  const limits = CABIN_LIMITS_MOCK[operator.toUpperCase()] ?? CABIN_LIMITS_MOCK.RYANAIR;
+  // Simulated detected dimensions: slightly exceeding width & height
+  const detected = {
+    width_cm:  limits.w + 2,
+    height_cm: limits.h + 2,
+    depth_cm:  limits.d,
+  };
+  const allowed = {
+    width_cm:  limits.w,
+    height_cm: limits.h,
+    depth_cm:  limits.d,
+  };
+  const overage = {
+    width_cm:  2,
+    height_cm: 2,
+    depth_cm:  0,
+  };
+  return {
+    is_luggage: true,
+    message: `[Demo Modu] Bavul boyutları yaklaşık ${detected.width_cm}×${detected.height_cm}×${detected.depth_cm} cm olarak tespit edildi. ${operator} kabin limiti aşılıyor.`,
+    status: "FAIL",
+    detected_dimensions: detected,
+    allowed_dimensions: allowed,
+    overage_cm: overage,
+    potential_gate_fee_eur: limits.fee,
+    confidence_score: 0.87,
+    recommendations: [
+      `${operator} kabin bagaj limiti: ${limits.w}×${limits.h}×${limits.d} cm — bavulunuz genişlik ve yükseklikte 2 cm aşıyor.`,
+      `Kapıda €${limits.fee} ceza riski var. Online kabin bagajı yükseltmesi ile €${Math.max(limits.fee - 18, 0)} tasarruf edebilirsiniz.`,
+      "⚠ Demo Modu: AI sunucu şu anda meşgul, sonuçlar simülasyon verileridir.",
+    ],
+  };
+}
+
 async function postImageToBackend(
   file: File,
   operator: string
@@ -78,17 +127,33 @@ async function postImageToBackend(
   formData.append("file", file);
   formData.append("operator", operator);
 
-  const response = await fetch(SCAN_ENDPOINT, {
-    method: "POST",
-    body:   formData,
-  });
+  try {
+    const response = await fetch(SCAN_ENDPOINT, {
+      method: "POST",
+      body:   formData,
+      signal: AbortSignal.timeout(15_000), // 15s timeout
+    });
 
-  if (!response.ok) {
-    const errorBody = await response.json().catch(() => ({ detail: "Sunucu hatası" }));
-    throw new Error(errorBody.detail ?? `HTTP ${response.status}`);
+    if (!response.ok) {
+      const errorBody = await response.json().catch(() => ({ detail: "Sunucu hatası" }));
+      // If backend returned quota/rate-limit error, fall back to mock
+      const detail = errorBody?.detail ?? "";
+      if (response.status === 429 || String(detail).includes("quota") || String(detail).includes("RESOURCE_EXHAUSTED")) {
+        console.warn("Backend AI kota aşımı — demo moduna geçiliyor");
+        return generateMockScanResult(operator);
+      }
+      throw new Error(errorBody.detail ?? `HTTP ${response.status}`);
+    }
+
+    return response.json() as Promise<BackendScanResponse>;
+  } catch (err) {
+    // Network error / timeout / backend not running → fall back to mock
+    if (err instanceof Error && err.message.includes("HTTP")) {
+      throw err; // re-throw explicit HTTP errors that aren't quota related
+    }
+    console.warn("Backend erişilemedi — demo moduna geçiliyor:", err);
+    return generateMockScanResult(operator);
   }
-
-  return response.json() as Promise<BackendScanResponse>;
 }
 
 // ─── Alt bileşenler ──────────────────────────────────────────

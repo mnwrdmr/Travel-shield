@@ -41,6 +41,7 @@ import { SavingsCard }              from "@/components/dashboard/SavingsCard";
 import { AlternativeTransportCard } from "@/components/dashboard/AlternativeTransportCard";
 import { FeeBreakdownCard }         from "@/components/dashboard/FeeBreakdownCard";
 import { DashboardSkeleton }        from "@/components/dashboard/DashboardStates";
+import LegalDisclaimer               from "@/components/dashboard/LegalDisclaimer";
 
 import type { AnalysisResult, BaggageAnalysis } from "@/types/travel";
 
@@ -213,10 +214,7 @@ export function DashboardClientWrapper({ initialAnalysis }: DashboardClientWrapp
         )}
       </div>
 
-      <p className="mt-8 pb-6 text-center text-[11px] leading-relaxed text-slate-600">
-        Travel Shield Yapay Zeka yalnızca bilgilendirme amaçlıdır.
-        Seyahat kurallarını her zaman operatörünüzle doğrulayın.
-      </p>
+      <LegalDisclaimer />
     </>
   );
 }
