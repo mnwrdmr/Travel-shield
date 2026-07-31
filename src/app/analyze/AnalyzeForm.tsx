@@ -33,6 +33,7 @@ import {
   MapPin, Plane, PlaneTakeoff, ScanLine, Send, Ticket, TrainFront,
 } from "lucide-react";
 import { BaggageScannerTab } from "@/components/analyze/BaggageScannerTab";
+import RagKnowledgeCard from "@/components/analyze/RagKnowledgeCard";
 import { Button }   from "@/components/ui/button";
 import { Card }     from "@/components/ui/card";
 import { useTravel } from "@/context/TravelContext";
@@ -470,6 +471,11 @@ export default function AnalyzeForm() {
           </div>
         </div>
       </Card>
+
+      {/* RAG Engine Mevzuat & Ceza Sorgu Kartı */}
+      <div className="mt-8">
+        <RagKnowledgeCard />
+      </div>
 
       <p className="mt-6 text-center font-mono text-[11px] tracking-wide text-[var(--color-foreground)]/40">
         THY · PGS · XQ · SunX · XC · RYR · WZZ · EZY tarife anlık görüntüleri · yalnızca simülasyon verisi

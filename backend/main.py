@@ -39,6 +39,10 @@ from services.vision_service import (
     analyze_luggage_image,
     analyze_ticket,
 )
+from services.rag_service import (
+    RagAnalysisResponse,
+    generate_rag_analysis,
+)
 
 load_dotenv()
 
@@ -91,6 +95,11 @@ class TicketAnalysisRequest(BaseModel):
     destination: str
     transport_mode: str = "FLIGHT"
     cabin_bag_included: bool = False
+
+
+class RagQueryRequest(BaseModel):
+    query: str
+    operator: str = ""
 
 
 class HealthResponse(BaseModel):
@@ -196,6 +205,34 @@ async def analyze_ticket_endpoint(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Bilet analizi sırasında bir hata oluştu.",
+        )
+
+
+# ── ENDPOINT 3: RAG Mevzuat Sorgulama ─────────────────────────
+@app.post(
+    "/api/v1/rag-query",
+    response_model=RagAnalysisResponse,
+    tags=["RAG Engine"],
+    summary="Yapay Zeka RAG ile resmi mevzuat ve ceza kuralı sorgula",
+    description="""
+Bilgi tabanından ilgili resmi sözleşme ve kural maddelerini (Retrieval) çeker,
+Gemini LLM ile gerekçeli ve atıflı RAG yanıtı üretir (Augmented Generation).
+""",
+)
+async def rag_query_endpoint(
+    body: RagQueryRequest,
+) -> RagAnalysisResponse:
+    try:
+        result = await generate_rag_analysis(
+            query=body.query,
+            operator=body.operator,
+        )
+        return result
+    except Exception as exc:
+        print(f"[rag-query] Hata: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="RAG sorgulaması sırasında bir hata oluştu.",
         )
 
 
