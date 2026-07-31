@@ -61,38 +61,83 @@ export default function ChatbotModal() {
     if (!textToSend) setInput("");
 
     const lower = text.toLowerCase();
-    const isWizz    = lower.includes("wizz");
-    const isThy     = lower.includes("thy") || lower.includes("turkish");
-    const isPegasus = lower.includes("pegasus");
+    const isWizz       = lower.includes("wizz");
+    const isThy        = lower.includes("thy") || lower.includes("turkish");
+    const isPegasus    = lower.includes("pegasus") || lower.includes("flypgs");
+    const isAjet       = lower.includes("ajet") || lower.includes("anadolu");
+    const isSunExpress = lower.includes("sunexpress") || lower.includes("sunx");
+    const isCorendon   = lower.includes("corendon");
+    const isRyanair    = lower.includes("ryanair") || lower.includes("ryr");
+    const isEasyjet    = lower.includes("easyjet") || lower.includes("ezy");
+    const isFlixbus    = lower.includes("flixbus");
+    const isTrenitalia = lower.includes("trenitalia");
 
     setTimeout(() => {
       let replyText: string;
 
-      if (isWizz) {
+      if (isThy) {
         replyText =
-          "⚠️ WIZZ AIR KAPIDA CEZA RİSKİ!\n\n" +
-          "• Resmi Limit: 40 × 30 × 20 cm\n" +
-          "• Katı boyut kontrolü — 1 cm aşımda €45–80 ceza\n" +
-          "• Öneri: Online kabin bagajı ekleyin.";
-      } else if (isThy) {
-        replyText =
-          "✈️ TURKISH AIRLINES BİLET ANALİZİ\n\n" +
-          "• Economy Lite biletlerde koltuk seçimi ücretli\n" +
-          "• 2. bagaj için ek ücret uygulanabilir\n" +
-          "• Miles&Smiles kart avantajlarını kontrol edin.";
+          "✈️ TÜRK HAVA YOLLARI (THY) BİLET & BAGAJ REHBERİ\n\n" +
+          "• Kabin Bagaj Limiti: 55 × 40 × 23 cm (maks 8 kg)\n" +
+          "• Ücretsiz Kişisel Eşya: 40 × 30 × 15 cm\n" +
+          "• Kapı Aşım Ücreti: ₺600 - ₺1200 (€20-€60)\n" +
+          "• Online Check-in: Dış hatlarda 24s kala açılır, 90dk kala kapanır.";
       } else if (isPegasus) {
         replyText =
-          "🟡 PEGASUS UYARI\n\n" +
-          "• Economy Eco'da kabin bagajı dahil değil (€20–40)\n" +
-          "• Havalimanı check-in: €25 ek ücret\n" +
-          "• Öneri: Web check-in yapın.";
+          "🟡 PEGASUS AIRLINES KONTROL REHBERİ\n\n" +
+          "• 'Light' Pakette sadece 1 adet kişisel eşya (40×30×15 cm, 3 kg) ücretsizdir.\n" +
+          "• Baş üstü dolabı bagajı bilette yoksa kapıda €50-€80 aşım cezası tahsil edilir.\n" +
+          "• Otomatik koltuk seçim tuzağına dikkat edin: Ödeme öncesi 'Rastgele Ücretsiz Koltuk' seçin.";
+      } else if (isAjet) {
+        replyText =
+          "✈️ AJET (ANADOLUJET) KURAL REHBERİ\n\n" +
+          "• Kabin Bagaj Limiti: 55 × 40 × 20 cm (maks 8 kg)\n" +
+          "• Kişisel Eşya: 1 adet 40 × 30 × 15 cm\n" +
+          "• Kapı Aşım Cezası: İç hatlarda ₺350, dış hatlarda €50.";
+      } else if (isSunExpress) {
+        replyText =
+          "☀️ SUNEXPRESS BAGAJ REHBERİ\n\n" +
+          "• Kabin Bagaj Limiti: 55 × 40 × 20 cm (maks 8 kg)\n" +
+          "• Limit aşımında kg başına €10-€15 veya kapıda €45 sabitleme cezası uygulanır.";
+      } else if (isCorendon) {
+        replyText =
+          "🔴 CORENDON AIRLINES KABİN KONTROLÜ\n\n" +
+          "• Kabin Bagaj Limiti: 55 × 40 × 20 cm (maks 8 kg)\n" +
+          "• Güvenlik ve kapı kontuarında aşan çantalar kargoya aktarılarak €45 ceza alınır.";
+      } else if (isWizz) {
+        replyText =
+          "🟣 WIZZ AIR KABIN REHBERİ\n\n" +
+          "• Ücretsiz Limit: 40 × 30 × 20 cm (maks 10 kg)\n" +
+          "• WIZZ Priority olmadan 55×40×23 cm troley bagaj uçağa alınmaz.\n" +
+          "• Kapı Aşım Cezası (Gate Baggage Fee): €80.";
+      } else if (isEasyjet) {
+        replyText =
+          "🟠 EASYJET KABIN REHBERİ\n\n" +
+          "• Standart Bilet Limiti: 45 × 36 × 20 cm (ağırlık sınırı yok)\n" +
+          "• Kapıda limit aşımı tespit edildiğinde €48 kapı bagaj cezası uygulanır.";
+      } else if (isRyanair) {
+        replyText =
+          "🟡 RYANAIR CEZA VE LİMİT UYARISI\n\n" +
+          "• Standart Bilet Limiti: 40 × 20 × 25 cm\n" +
+          "• Kapıda Limit Aşım Cezası: €70 (Gate Baggage Fee)\n" +
+          "• Havalimanı Kontuar Check-in Cezası: €55\n" +
+          "💡 Çözüm: €18'e online kabin hakkı ekleyin → €52 net tasarruf!";
+      } else if (isFlixbus) {
+        replyText =
+          "🚌 FLIXBUS SEYAHAT REHBERİ\n\n" +
+          "• Kabin Bagaj Limiti: 67 × 42 × 27 cm\n" +
+          "• Bagaj sınırı esnektir ve kapı cezası uygulanmaz.";
+      } else if (isTrenitalia) {
+        replyText =
+          "🚆 TRENITALIA YÜKSEK HIZLI TREN REHBERİ\n\n" +
+          "• Kabin Bagaj Limiti: 80 × 50 × 30 cm\n" +
+          "• Koridoru kapatan bagajlara €50 tren içi ceza uygulanır.";
       } else {
         replyText =
-          "⚠️ RYANAIR KAPIDA CEZA RİSKİ!\n\n" +
-          "• Resmi Limit: 40 × 20 × 25 cm\n" +
-          "• Taranan Çanta: 42 × 22 × 25 cm (+2 cm aşım)\n" +
-          "• Olası Kapı Cezası: €70\n\n" +
-          "💡 Çözüm: €18'e online kabin hakkı ekle → €52 net tasarruf!";
+          "🛡️ TRAVEL SHIELD AI ASİSTANI\n\n" +
+          "Seyahat belgenizi veya merak ettiğiniz havayolunu yazın (THY, Pegasus, AJet, SunExpress, Corendon, Ryanair, Wizz Air, EasyJet vb.).\n\n" +
+          "• Kapı cezaları ve gizli tuzaklar anında analiz edilir.\n" +
+          "• Biletinizi taratmak için aşağıdaki 'Bavul Analizine Git' butonunu kullanabilirsiniz.";
       }
 
       const botMsg: Message = {
