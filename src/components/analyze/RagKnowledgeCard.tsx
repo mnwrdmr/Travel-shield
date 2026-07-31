@@ -30,7 +30,7 @@ interface RagResponse {
   is_demo: boolean;
 }
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:8000";
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "";
 
 const QUICK_QUERIES = [
   { label: "THY El Bagajı Sınırı", query: "THY el bagajı sınırı nedir ve kapı cezası ne kadar?", op: "THY" },
