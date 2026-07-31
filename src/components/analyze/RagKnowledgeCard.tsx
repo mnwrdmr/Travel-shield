@@ -140,17 +140,42 @@ const LOCAL_KNOWLEDGE_BASE: PolicyChunk[] = [
 
 function getLocalRagFallback(searchQuery: string, searchOp: string): RagResponse {
   const opClean = searchOp.toUpperCase();
-  const qTokens = searchQuery.toLowerCase().split(/\s+/);
+  const qLower = searchQuery.toLowerCase();
+  const qTokens = qLower.replace(/[^\w\sğüşıöçĞÜŞİÖÇ]/g, "").split(/\s+/).filter((t) => t.length > 1);
 
-  const matched = LOCAL_KNOWLEDGE_BASE.filter((item) => {
-    if (opClean && item.operator === opClean) return true;
-    const text = (item.title + " " + item.content).toLowerCase();
-    return qTokens.some((t) => t.length > 2 && text.includes(t));
+  const scored = LOCAL_KNOWLEDGE_BASE.map((item) => {
+    let score = 0;
+    const itemOp = item.operator.toUpperCase();
+    if (opClean && (itemOp === opClean || item.title.toUpperCase().includes(opClean))) {
+      score += 5;
+    }
+
+    const corpus = (item.title + " " + item.content + " " + item.category + " " + item.clause_ref).toLowerCase();
+    qTokens.forEach((token) => {
+      if (corpus.includes(token)) {
+        score += 3;
+      }
+    });
+
+    if (qLower.includes("checkin") || qLower.includes("check-in") || qLower.includes("kontuar") || qLower.includes("kapan")) {
+      if (item.category === "CHECKIN") score += 8;
+    }
+    if (qLower.includes("koltuk") || qLower.includes("seat") || qLower.includes("seçim")) {
+      if (item.category === "SEAT_TRAP") score += 8;
+    }
+    if (qLower.includes("bagaj") || qLower.includes("kabin") || qLower.includes("ceza") || qLower.includes("limit") || qLower.includes("boyut")) {
+      if (item.category === "BAGGAGE") score += 5;
+    }
+
+    return { item, score };
   });
 
-  const chunks = matched.length > 0
-    ? matched.slice(0, 3)
-    : LOCAL_KNOWLEDGE_BASE.filter((i) => i.operator === "THY" || i.operator === "RYANAIR").slice(0, 2);
+  scored.sort((a, b) => b.score - a.score);
+
+  const topItems = scored.filter((s) => s.score > 0).map((s) => s.item);
+  const chunks = topItems.length > 0
+    ? topItems.slice(0, 3)
+    : LOCAL_KNOWLEDGE_BASE.filter((i) => i.operator === opClean || i.operator === "THY").slice(0, 2);
 
   const citations = chunks.map((c) => `${c.operator} - ${c.clause_ref}: ${c.title}`);
   
