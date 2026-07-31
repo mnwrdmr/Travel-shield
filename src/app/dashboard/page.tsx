@@ -36,7 +36,7 @@ export const metadata: Metadata = {
 };
 
 export default async function DashboardPage() {
-  const initialAnalysis = MOCK_ANALYSIS;
+  const initialAnalysis = null;
 
   return (
     <div className="min-h-screen bg-slate-950">

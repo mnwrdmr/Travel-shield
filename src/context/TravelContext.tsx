@@ -200,17 +200,24 @@ const AIRLINE_RISKS: Record<string, Omit<RiskAlert, "id">[]> = {
   AJET:       [{ level: "INFO", title: "AJet kabin bagajı politikası", description: "Kabin limitleri standart LCC kurallarını takip eder.", potentialFine: 0, currency: "EUR" }],
   SUNEXPRESS: [{ level: "INFO", title: "Koltuk seçim ücreti", description: "Standart biletlerde koltuk seçimi ek ücretlidir.", potentialFine: 10, currency: "EUR" }],
   CORENDON:   [{ level: "INFO", title: "Büyük kabin bagajı ücretli olabilir", description: "Küçük el çantası ücretsiz; büyük kabin bagajı bilet tipine göre ücretli.", potentialFine: 20, currency: "EUR" }],
+  TRENITALIA: [{ level: "WARNING", title: "Tren içi bagaj boyutu kontrolü", description: "Bagajlar koridoru engellememelidir. İhlal durumunda €50 ceza.", potentialFine: 50, currency: "EUR" }],
+  SNCF:       [{ level: "INFO", title: "TGV Inoui etiketleme kuralı", description: "Bavulların üzerinde isim ve iletişim bilgileri etiketi bulunması zorunludur.", potentialFine: 0, currency: "EUR" }],
+  DB:         [{ level: "INFO", title: "ICE bagaj rafları", description: "Koltuk üstü raflar standart valizler içindir. Koridor kapatılmamalıdır.", potentialFine: 0, currency: "EUR" }],
+  OBB:        [{ level: "INFO", title: "ÖBB Railjet bagaj kuralı", description: "Bavullar ilgili raflara koyulmalıdır.", potentialFine: 0, currency: "EUR" }],
+  FLIXBUS:    [{ level: "INFO", title: "Bagaj etiketi kontrolü", description: "Bagajınızı bagaj kompartımanına teslim ederken verilen fişi saklayın.", potentialFine: 0, currency: "EUR" }],
 };
 
 function getRisksForOperator(operator: string): Omit<RiskAlert, "id">[] {
-  return AIRLINE_RISKS[operator.toUpperCase()] ?? AIRLINE_RISKS["RYANAIR"];
+  return AIRLINE_RISKS[operator.toUpperCase()] ?? [
+    { level: "INFO", title: `${operator} seyahat kuralları`, description: "Taşıyıcı firmanın standart bagaj ve biniş prosedürleri geçerlidir.", potentialFine: 0, currency: "EUR" }
+  ];
 }
 
 // ─────────────────────────────────────────────────────────────
 // Simülasyon motoru (tek sorumluluk)
 // ─────────────────────────────────────────────────────────────
 
-/** Bilet analizi için simüle AnalysisResult üretir */
+/** Bilet analizi için AnalysisResult üretir — gerçek bagaj boyutları kullanılır */
 function buildAnalysisResult(
   formData: RawFormInput,
   existingBaggage: BaggageAnalysis | null
@@ -222,18 +229,69 @@ function buildAnalysisResult(
     id: `risk_${Date.now()}_${i}`,
   }));
 
+  // ── Gerçek bagaj boyut karşılaştırması ──
+  const limits = getCabinLimits(op);
+  let baggageAnalysis: BaggageAnalysis | undefined = existingBaggage ?? undefined;
+
+  if (formData.baggageDimensions) {
+    const d = formData.baggageDimensions;
+    const ow = Math.max(0, d.widthCm  - limits.widthCm);
+    const oh = Math.max(0, d.heightCm - limits.heightCm);
+    const od = Math.max(0, d.depthCm  - limits.depthCm);
+    const isOversized = ow > 0 || oh > 0 || od > 0;
+    const gateFee = isOversized ? limits.gateFee : 0;
+    const netSavings = gateFee > 0 ? gateFee - 18 : 0;
+
+    const recommendations: string[] = isOversized
+      ? [
+          `Çantanız ${formData.airline} kabin limitini (${limits.widthCm}×${limits.heightCm}×${limits.depthCm} cm) aşıyor.`,
+          ...(gateFee > 0
+            ? [`Kapıda €${gateFee} ceza ödememek için €18'e online kabin hakkı ekleyin → €${netSavings} tasarruf.`]
+            : []),
+          "Çantanızı sıkıştırarak birkaç cm küçültmeyi deneyin.",
+        ]
+      : [`Çantanız ${formData.airline} kabin limitleri içinde — tamamen güvenli.`];
+
+    baggageAnalysis = {
+      id:              `baggage_${Date.now()}`,
+      status:          isOversized ? "OVERSIZED" : "COMPLIANT",
+      detectedDimensions: d,
+      allowedDimensions: { widthCm: limits.widthCm, heightCm: limits.heightCm, depthCm: limits.depthCm },
+      overageCm:       { width: ow, height: oh, depth: od },
+      potentialGateFee: gateFee,
+      currency:        "EUR",
+      confidenceScore: 95,
+      source:          "MANUAL",
+      recommendations,
+    };
+
+    // Bagaj aşımını da risklere ekle
+    if (isOversized && gateFee > 0) {
+      risks.push({
+        id: `risk_baggage_${Date.now()}`,
+        level: "CRITICAL",
+        title: `El bagajı boyut limitini aşıyor (${d.widthCm}×${d.heightCm}×${d.depthCm} cm)`,
+        description: `${formData.airline} limiti ${limits.widthCm}×${limits.heightCm}×${limits.depthCm} cm — kapıda €${gateFee} ceza riski.`,
+        potentialFine: gateFee,
+        currency: "EUR",
+        actionLabel: "Online kabin hakkı ekle",
+        actionHref: "/analyze?tab=baggage",
+      });
+    }
+  }
+
+  // ── Ücret ve tasarruf hesabı (düzeltilmiş mantık) ──
+  // Tüm riskler kaçınılabilir — bu uygulamanın amacı budur
   const fees: FeeLineItem[] = risks
     .filter((r) => r.potentialFine > 0)
     .map((r) => ({
       label:   r.title,
       amount:  r.potentialFine,
       currency: r.currency,
-      avoided: r.level !== "CRITICAL",
+      avoided: true,  // Travel Shield uyarıyor → kullanıcı önlem alabilir
     }));
 
-  const savedAmount = fees
-    .filter((f) => f.avoided)
-    .reduce((sum, f) => sum + Math.round(f.amount * 0.9), 0);
+  const savedAmount = fees.reduce((sum, f) => sum + f.amount, 0);
 
   const departure = formData.date
     ? new Date(formData.date)
@@ -243,11 +301,11 @@ function buildAnalysisResult(
     id:          `analysis_${Date.now()}`,
     analyzedAt:  new Date().toISOString(),
     segment: {
-      pnr:              `TS${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
+      pnr:              formData.pastedBookingText?.match(/[A-Z0-9]{6}/)?.[0] || "Belirtilmedi",
       operator:         formData.airline,
       mode:             formData.transportType,
-      origin:           formData.origin      || "IST",
-      destination:      formData.destination || "BCN",
+      origin:           formData.origin      || "Belirtilmedi",
+      destination:      formData.destination || "Belirtilmedi",
       departureTime:    departure.toISOString(),
       arrivalTime:      new Date(departure.getTime() + 3 * 3_600_000).toISOString(),
       checkInDeadline:  new Date(departure.getTime() - 2 * 3_600_000).toISOString(),
@@ -257,28 +315,26 @@ function buildAnalysisResult(
     savings: {
       totalSaved: savedAmount,
       currency:   "EUR",
-      breakdown:  fees
-        .filter((f) => f.avoided)
-        .map((f) => ({
-          category:    f.label,
-          originalCost: f.amount,
-          savedAmount:  Math.round(f.amount * 0.9),
-          currency:    f.currency,
-        })),
+      breakdown:  fees.map((f) => ({
+        category:    f.label,
+        originalCost: f.amount,
+        savedAmount:  f.amount,
+        currency:    f.currency,
+      })),
     },
     alternatives: [{
       id:            `alt_${Date.now()}`,
       operator:      "FLIXBUS",
       mode:          "BUS",
-      origin:        formData.origin      || "IST",
-      destination:   formData.destination || "BCN",
+      origin:        formData.origin      || "Belirtilmedi",
+      destination:   formData.destination || "Belirtilmedi",
       departureTime: new Date(departure.getTime() + 4 * 3_600_000).toISOString(),
       price: 39, currency: "EUR", savings: 86,
       bookingUrl: "https://www.flixbus.com",
       tags: ["Bagaj ücreti yok", "Ücretsiz iptal"],
     }],
     fees,
-    baggageAnalysis: existingBaggage ?? undefined,
+    baggageAnalysis,
   };
 }
 
@@ -438,6 +494,18 @@ export function TravelProvider({ children }: { children: ReactNode }) {
     };
     setBaggageResult(result);
     storageSave(LS_KEYS.baggage, result);
+
+    // active analysisResult varsa, onun içindeki baggageAnalysis'i de güncelle
+    setAnalysisResult((prev) => {
+      if (!prev) return prev;
+      const updated: AnalysisResult = {
+        ...prev,
+        baggageAnalysis: result,
+      };
+      storageSave(LS_KEYS.analysis, updated);
+      return updated;
+    });
+
     return result;
   }, []);
 

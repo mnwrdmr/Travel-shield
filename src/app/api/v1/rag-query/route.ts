@@ -105,7 +105,39 @@ const POLICIES: PolicyChunk[] = [
     category: "BAGGAGE",
     title: "Trenitalia Yüksek Hızlı Tren Bagaj Limitleri",
     clause_ref: "Trenitalia Regolamento Bagagli 2024",
-    content: "Trenitalia Frecciarossa ve Frecciargento trenlerinde bagaj limiti kişi başı 2 adet büyüklük sınırı (toplam boyut 183 cm) gözetilmeksizin bagajdır. Sınırı aşan veya koridorları kapatan bagajlara €50 tren içi ceza uygulanır.",
+    content: "Trenitalia Frecciarossa ve Frecciargento trenlerinde bagaj sınırı kişi başı 2 adet bagajdır. Sınırı aşan veya koridorları kapatan bagajlara €50 tren içi ceza uygulanır.",
+  },
+  {
+    id: "SNCF_BAG_01",
+    operator: "SNCF",
+    category: "BAGGAGE",
+    title: "SNCF TGV Inoui ve Ouigo Bagaj Kuralları",
+    clause_ref: "SNCF Reglement Bagages Art. 5",
+    content: "SNCF TGV Inoui trenlerinde bagaj sınırı olmamakla birlikte her valizin üzerine isim etiketi takılması zorunludur. Ouigo trenlerinde ise bilet fiyatına yalnızca 1 kişisel eşya (36x27x15 cm) ve 1 kabin bagajı (55x35x25 cm) dahildir.",
+  },
+  {
+    id: "DB_BAG_01",
+    operator: "DB",
+    category: "BAGGAGE",
+    title: "Deutsche Bahn ICE Bagaj Esasları",
+    clause_ref: "DB Beförderungsbedingungen Section 7",
+    content: "Deutsche Bahn ICE hızlı trenlerinde yolcu başına 1 el bagajı ve 1 ek valiz hakkı bulunur. Eşyaların koltuk altı veya koltuk üstü bagaj raflarına sığması gerekir. Koridoru engelleyen bagajlar personel tarafından aktarılabilir.",
+  },
+  {
+    id: "OBB_BAG_01",
+    operator: "OBB",
+    category: "BAGGAGE",
+    title: "ÖBB Railjet Seyahat ve Bagaj Kuralları",
+    clause_ref: "ÖBB Handgepäck Bestimmungen",
+    content: "ÖBB Railjet trenlerinde yolcular bagaj raflarını ücretsiz kullanabilir. Ağır ve büyük valizler giriş alanlarındaki özel bagaj kompartımanlarına yerleştirilmelidir.",
+  },
+  {
+    id: "FLIXBUS_BAG_01",
+    operator: "FLIXBUS",
+    category: "BAGGAGE",
+    title: "FlixBus Bagaj Limitleri ve Ücret Politikası",
+    clause_ref: "FlixBus Bagaj Şartları Madde 3.1",
+    content: "FlixBus biletlerine 1 adet el bagajı (maks 42x30x18 cm, 7 kg) ve 1 adet kargo bagajı (maks 80x50x30 cm, 20 kg) dahildir. Ek kargo bagajı bilet alma esnasında €3-€5 karşılığında eklenebilir.",
   },
 ];
 
@@ -119,6 +151,10 @@ const OPERATOR_ALIASES: Record<string, string> = {
   ryanair: "RYANAIR", ryr: "RYANAIR",
   easyjet: "EASYJET", ezy: "EASYJET",
   trenitalia: "TRENITALIA",
+  sncf: "SNCF",
+  db: "DB", deutsche: "DB",
+  obb: "OBB", öbb: "OBB",
+  flixbus: "FLIXBUS", flix: "FLIXBUS",
 };
 
 function detectOperatorInQuery(query: string): string {

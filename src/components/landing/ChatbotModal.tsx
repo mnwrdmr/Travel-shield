@@ -47,9 +47,11 @@ export default function ChatbotModal() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen]);
 
-  const handleSend = (textToSend?: string) => {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSend = async (textToSend?: string) => {
     const text = textToSend ?? input;
-    if (!text.trim()) return;
+    if (!text.trim() || isLoading) return;
 
     const userMsg: Message = {
       id: Date.now().toString(),
@@ -60,96 +62,67 @@ export default function ChatbotModal() {
     setMessages((prev) => [...prev, userMsg]);
     if (!textToSend) setInput("");
 
-    const lower = text.toLowerCase();
-    const isWizz       = lower.includes("wizz");
-    const isThy        = lower.includes("thy") || lower.includes("turkish");
-    const isPegasus    = lower.includes("pegasus") || lower.includes("flypgs");
-    const isAjet       = lower.includes("ajet") || lower.includes("anadolu");
-    const isSunExpress = lower.includes("sunexpress") || lower.includes("sunx");
-    const isCorendon   = lower.includes("corendon");
-    const isRyanair    = lower.includes("ryanair") || lower.includes("ryr");
-    const isEasyjet    = lower.includes("easyjet") || lower.includes("ezy");
-    const isFlixbus    = lower.includes("flixbus");
-    const isTrenitalia = lower.includes("trenitalia");
+    setIsLoading(true);
 
-    setTimeout(() => {
-      let replyText: string;
+    // Temporary typing indicator
+    const typingId = `typing_${Date.now()}`;
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: typingId,
+        sender: "bot",
+        text: "🔍 Sözleşmeler ve kurallar taranıyor...",
+        time: "",
+      },
+    ]);
 
-      if (isThy) {
-        replyText =
-          "✈️ TÜRK HAVA YOLLARI (THY) BİLET & BAGAJ REHBERİ\n\n" +
-          "• Kabin Bagaj Limiti: 55 × 40 × 23 cm (maks 8 kg)\n" +
-          "• Ücretsiz Kişisel Eşya: 40 × 30 × 15 cm\n" +
-          "• Kapı Aşım Ücreti: ₺600 - ₺1200 (€20-€60)\n" +
-          "• Online Check-in: Dış hatlarda 24s kala açılır, 90dk kala kapanır.";
-      } else if (isPegasus) {
-        replyText =
-          "🟡 PEGASUS AIRLINES KONTROL REHBERİ\n\n" +
-          "• 'Light' Pakette sadece 1 adet kişisel eşya (40×30×15 cm, 3 kg) ücretsizdir.\n" +
-          "• Baş üstü dolabı bagajı bilette yoksa kapıda €50-€80 aşım cezası tahsil edilir.\n" +
-          "• Otomatik koltuk seçim tuzağına dikkat edin: Ödeme öncesi 'Rastgele Ücretsiz Koltuk' seçin.";
-      } else if (isAjet) {
-        replyText =
-          "✈️ AJET (ANADOLUJET) KURAL REHBERİ\n\n" +
-          "• Kabin Bagaj Limiti: 55 × 40 × 20 cm (maks 8 kg)\n" +
-          "• Kişisel Eşya: 1 adet 40 × 30 × 15 cm\n" +
-          "• Kapı Aşım Cezası: İç hatlarda ₺350, dış hatlarda €50.";
-      } else if (isSunExpress) {
-        replyText =
-          "☀️ SUNEXPRESS BAGAJ REHBERİ\n\n" +
-          "• Kabin Bagaj Limiti: 55 × 40 × 20 cm (maks 8 kg)\n" +
-          "• Limit aşımında kg başına €10-€15 veya kapıda €45 sabitleme cezası uygulanır.";
-      } else if (isCorendon) {
-        replyText =
-          "🔴 CORENDON AIRLINES KABİN KONTROLÜ\n\n" +
-          "• Kabin Bagaj Limiti: 55 × 40 × 20 cm (maks 8 kg)\n" +
-          "• Güvenlik ve kapı kontuarında aşan çantalar kargoya aktarılarak €45 ceza alınır.";
-      } else if (isWizz) {
-        replyText =
-          "🟣 WIZZ AIR KABIN REHBERİ\n\n" +
-          "• Ücretsiz Limit: 40 × 30 × 20 cm (maks 10 kg)\n" +
-          "• WIZZ Priority olmadan 55×40×23 cm troley bagaj uçağa alınmaz.\n" +
-          "• Kapı Aşım Cezası (Gate Baggage Fee): €80.";
-      } else if (isEasyjet) {
-        replyText =
-          "🟠 EASYJET KABIN REHBERİ\n\n" +
-          "• Standart Bilet Limiti: 45 × 36 × 20 cm (ağırlık sınırı yok)\n" +
-          "• Kapıda limit aşımı tespit edildiğinde €48 kapı bagaj cezası uygulanır.";
-      } else if (isRyanair) {
-        replyText =
-          "🟡 RYANAIR CEZA VE LİMİT UYARISI\n\n" +
-          "• Standart Bilet Limiti: 40 × 20 × 25 cm\n" +
-          "• Kapıda Limit Aşım Cezası: €70 (Gate Baggage Fee)\n" +
-          "• Havalimanı Kontuar Check-in Cezası: €55\n" +
-          "💡 Çözüm: €18'e online kabin hakkı ekleyin → €52 net tasarruf!";
-      } else if (isFlixbus) {
-        replyText =
-          "🚌 FLIXBUS SEYAHAT REHBERİ\n\n" +
-          "• Kabin Bagaj Limiti: 67 × 42 × 27 cm\n" +
-          "• Bagaj sınırı esnektir ve kapı cezası uygulanmaz.";
-      } else if (isTrenitalia) {
-        replyText =
-          "🚆 TRENITALIA YÜKSEK HIZLI TREN REHBERİ\n\n" +
-          "• Kabin Bagaj Limiti: 80 × 50 × 30 cm\n" +
-          "• Koridoru kapatan bagajlara €50 tren içi ceza uygulanır.";
-      } else {
-        replyText =
-          "🛡️ TRAVEL SHIELD AI ASİSTANI\n\n" +
-          "Seyahat belgenizi veya merak ettiğiniz havayolunu yazın (THY, Pegasus, AJet, SunExpress, Corendon, Ryanair, Wizz Air, EasyJet vb.).\n\n" +
-          "• Kapı cezaları ve gizli tuzaklar anında analiz edilir.\n" +
-          "• Biletinizi taratmak için aşağıdaki 'Bavul Analizine Git' butonunu kullanabilirsiniz.";
+    try {
+      const res = await fetch("/api/v1/rag-query", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: text }),
+      });
+
+      const data = await res.json();
+      const answerText = data.answer || "Bu konuda kural veya mevzuat maddesi bulunamadı.";
+
+      // Include citations if available
+      let finalText = answerText;
+      if (Array.isArray(data.citations) && data.citations.length > 0) {
+        finalText += "\n\n📌 **Resmi Madde Atıfları:**\n" + data.citations.map((c: string) => `• ${c}`).join("\n");
       }
 
-      const botMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        sender: "bot",
-        text: replyText,
-        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        highlightCard: true,
-        actionUrl: "/analyze?tab=baggage",
-      };
-      setMessages((prev) => [...prev, botMsg]);
-    }, 900);
+      setMessages((prev) => {
+        const filtered = prev.filter((m) => m.id !== typingId);
+        return [
+          ...filtered,
+          {
+            id: (Date.now() + 1).toString(),
+            sender: "bot",
+            text: finalText,
+            time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            highlightCard: true,
+            actionUrl: "/analyze?tab=baggage",
+          },
+        ];
+      });
+    } catch {
+      setMessages((prev) => {
+        const filtered = prev.filter((m) => m.id !== typingId);
+        return [
+          ...filtered,
+          {
+            id: (Date.now() + 1).toString(),
+            sender: "bot",
+            text: "⚠️ Bağlantı hatası oluştu. Lütfen /analyze sayfamızı kullanarak detaylı analiz yapın.",
+            time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            actionUrl: "/analyze",
+          },
+        ];
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
