@@ -8,16 +8,18 @@ import { TravelProvider } from "@/context/TravelContext";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
   title: "Travel Shield - Havayolu Tuzaklarına Karşı Koruma",
-  description: "Ryanair, Wizz Air ve Trenitalia gibi havayollarının gizli kural labirentlerini yapay zeka ile analiz eden bilet koruma sistemi.",
+  description: "Ryanair, Wizz Air ve Türk havayollarının gizli kural labirentlerini yapay zeka ile analiz eden bilet koruma sistemi.",
 };
 
 export default function RootLayout({
@@ -27,7 +29,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="tr"
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
@@ -43,4 +45,5 @@ export default function RootLayout({
     </html>
   );
 }
+
 

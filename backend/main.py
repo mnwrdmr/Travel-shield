@@ -19,19 +19,20 @@
 from __future__ import annotations
 
 import os
+import io
 from contextlib import asynccontextmanager
 from typing import Annotated
 
 from dotenv import load_dotenv
+from PIL import Image, UnidentifiedImageError
 
 # En üstte .env dosyasını yüklüyoruz
 load_dotenv()
 
-from dotenv import load_dotenv
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from services.vision_service import (
     BaggageScanResponse,
@@ -43,8 +44,6 @@ from services.rag_service import (
     RagAnalysisResponse,
     generate_rag_analysis,
 )
-
-load_dotenv()
 
 # ── Uygulama yaşam döngüsü ────────────────────────────────────
 @asynccontextmanager
@@ -78,28 +77,28 @@ ALLOWED_ORIGINS = [
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[o for o in ALLOWED_ORIGINS if o],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
 
 # ── İzin verilen MIME türleri ─────────────────────────────────
-ALLOWED_MIME = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+ALLOWED_MIME = {"image/jpeg", "image/png", "image/webp"}
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
 
 
 # ── Request/Response modelleri ────────────────────────────────
 class TicketAnalysisRequest(BaseModel):
-    operator: str
-    origin: str
-    destination: str
-    transport_mode: str = "FLIGHT"
+    operator: str = Field(min_length=2, max_length=32)
+    origin: str = Field(min_length=2, max_length=80)
+    destination: str = Field(min_length=2, max_length=80)
+    transport_mode: str = Field(default="FLIGHT", max_length=16)
     cabin_bag_included: bool = False
 
 
 class RagQueryRequest(BaseModel):
-    query: str
-    operator: str = ""
+    query: str = Field(min_length=2, max_length=600)
+    operator: str = Field(default="", max_length=32)
 
 
 class HealthResponse(BaseModel):
@@ -162,12 +161,28 @@ async def scan_luggage(
             detail="Görsel çok küçük veya bozuk. Lütfen geçerli bir fotoğraf yükleyin.",
         )
 
+    # Content-Type is controlled by the client. Decode the bytes before they
+    # are sent to an AI provider so a spoofed/non-image payload is rejected.
+    try:
+        with Image.open(io.BytesIO(image_bytes)) as image:
+            image.verify()
+    except (UnidentifiedImageError, OSError, Image.DecompressionBombError):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Dosya geçerli bir desteklenen görsel değil.",
+        )
+
     try:
         result = await analyze_luggage_image(
             image_bytes=image_bytes,
             mime_type=file.content_type or "image/jpeg",
             operator=operator.upper(),
         )
+        if result.analysis_source in {"demo", "error"}:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Vision AI şu anda kullanılamıyor; istemci demo moduna geçebilir.",
+            )
         return result
     except Exception as exc:
         print(f"[scan-luggage] Vision AI hatası: {exc}")

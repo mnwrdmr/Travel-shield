@@ -19,7 +19,8 @@ export const MOCK_BAGGAGE_ANALYSIS: BaggageAnalysis = {
   overageCm:          { width: 2, height: 2, depth: 0 },
   potentialGateFee: 70,
   currency:         "EUR",
-  confidenceScore:  0.94,
+  confidenceScore:  94,
+  source:           "DEMO",
   imageUrl:         undefined,
   recommendations: [
     "Çantanız Ryanair kabin limitini (40×20×25 cm) aşıyor.",

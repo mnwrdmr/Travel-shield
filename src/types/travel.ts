@@ -113,6 +113,7 @@ export interface BaggageAnalysis {
   potentialGateFee: number;
   currency: string;
   confidenceScore: number;
+  source: "AI" | "DEMO" | "MANUAL";
   imageUrl?: string;
   recommendations: string[];
 }
@@ -140,4 +141,5 @@ export interface BackendScanResponse {
   potential_gate_fee_eur: number | null;
   confidence_score: number | null;
   recommendations: string[] | null;
+  analysis_source?: "gemini" | "gpt-4o" | "demo" | "error";
 }

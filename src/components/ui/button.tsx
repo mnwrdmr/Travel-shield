@@ -67,9 +67,11 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     if (asChild && React.isValidElement(children)) {
       // Destructure button-only props to prevent passing them to non-button elements (like <a>)
-      const { type, ...childProps } = props as any;
-      return React.cloneElement(children as React.ReactElement<any>, {
-        className: cn(classes, (children as React.ReactElement<any>).props?.className),
+      const childProps = { ...props };
+      delete childProps.type;
+      const child = children as React.ReactElement<React.ButtonHTMLAttributes<HTMLButtonElement>>;
+      return React.cloneElement(child, {
+        className: cn(classes, child.props.className),
         ...childProps,
       });
     }

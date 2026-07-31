@@ -206,15 +206,18 @@ function TypedLine({ text, done }: { text: string; done: boolean }) {
 export default function AnalyzeForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { isLoading, isBaggageAnalyzing, error, runAiSimulation, runBaggageAiSimulation } = useTravel();
+  const { isLoading, isBaggageAnalyzing, error, runAiSimulation, runBaggageAiSimulation, saveBackendBaggageAnalysis } = useTravel();
 
-  const [section, setSection] = useState<Section>(() =>
-    typeof window !== "undefined" && new URLSearchParams(window.location.search).get("tab") === "baggage"
-      ? "baggage" : "ticket"
-  );
-  useEffect(() => {
-    if (searchParams?.get("tab") === "baggage") setSection("baggage");
-  }, [searchParams]);
+  const tabParam = searchParams.get("tab");
+  const [overrideSection, setOverrideSection] = useState<Section | null>(null);
+  const section: Section = overrideSection ?? (tabParam === "baggage" ? "baggage" : "ticket");
+
+  const handleTabChange = useCallback((newSection: Section) => {
+    setOverrideSection(newSection);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", newSection);
+    router.replace(`/analyze?${params.toString()}`, { scroll: false });
+  }, [router, searchParams]);
 
   const [mode, setMode]                   = useState<Mode>("paste");
   const [pastedText, setPastedText]       = useState("");
@@ -263,15 +266,11 @@ export default function AnalyzeForm() {
     router.push("/dashboard");
   }
 
-  // FastAPI sonucu geldiğinde context'e aktar ve yönlendir
+  // FastAPI sonucu geldiğinde context'e aktar
   const handleFastApiResult = useCallback(async (result: BackendScanResponse) => {
     if (!result.is_luggage) return;
-    const dims: BaggageDimensions | undefined = result.detected_dimensions
-      ? { widthCm: result.detected_dimensions.width_cm, heightCm: result.detected_dimensions.height_cm, depthCm: result.detected_dimensions.depth_cm }
-      : undefined;
-    await runBaggageAiSimulation(airline, dims, undefined);
-    router.push("/dashboard");
-  }, [airline, router, runBaggageAiSimulation]);
+    await saveBackendBaggageAnalysis(airline, result);
+  }, [airline, saveBackendBaggageAnalysis]);
 
   return (
     <main className="mx-auto w-full max-w-xl px-4 py-14 sm:py-20">
@@ -297,7 +296,7 @@ export default function AnalyzeForm() {
           { key: "baggage", icon: Camera, label: "Bavul AI & AR Tarama" },
         ] as const).map(({ key, icon: Icon, label }) => (
           <button key={key} type="button" role="tab" aria-selected={section === key}
-            onClick={() => setSection(key)}
+            onClick={() => handleTabChange(key)}
             className={`flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] ${
               section === key
                 ? "bg-[var(--color-primary)]/20 font-medium text-zinc-100 ring-1 ring-[var(--color-primary)]/40"
@@ -350,7 +349,7 @@ export default function AnalyzeForm() {
                   className={`${fieldBase} h-auto resize-none py-2.5 font-mono text-[13px] leading-relaxed`}
                 />
                 <p className="text-xs text-zinc-500">
-                  Metinden taşıyıcı, rota ve tarih otomatik çıkarılır. Hiçbir veri tarayıcından çıkmaz.
+                  Metinden taşıyıcı, rota ve tarih otomatik çıkarılır. Sorgu analiz için API sunucusuna gönderilir.
                 </p>
               </div>
             ) : (

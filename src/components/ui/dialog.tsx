@@ -15,11 +15,10 @@ interface DialogProps {
   className?: string;
 }
 
-interface DialogTitleProps extends React.HTMLAttributes<HTMLHeadingElement> {}
-interface DialogDescriptionProps
-  extends React.HTMLAttributes<HTMLParagraphElement> {}
-interface DialogContentProps extends React.HTMLAttributes<HTMLDivElement> {}
-interface DialogFooterProps extends React.HTMLAttributes<HTMLDivElement> {}
+type DialogTitleProps = React.HTMLAttributes<HTMLHeadingElement>;
+type DialogDescriptionProps = React.HTMLAttributes<HTMLParagraphElement>;
+type DialogContentProps = React.HTMLAttributes<HTMLDivElement>;
+type DialogFooterProps = React.HTMLAttributes<HTMLDivElement>;
 
 /* ─────────────────────────────────────────────
    Dialog (root)

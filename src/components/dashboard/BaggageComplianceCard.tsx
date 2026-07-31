@@ -73,7 +73,7 @@ function DimRow({ label, detected, allowed }: DimRowProps) {
 // ── Ana kart ─────────────────────────────────────────────────
 export function BaggageComplianceCard({ baggage }: BaggageComplianceCardProps) {
   const isOversized = baggage.status === "OVERSIZED" || baggage.status === "EXCEEDED";
-  const savings = baggage.potentialGateFee - 18; // €70 - €18 = €52
+  const savings = Math.max(0, baggage.potentialGateFee - 18); // €70 - €18 = €52
 
   return (
     <div
@@ -110,6 +110,9 @@ export function BaggageComplianceCard({ baggage }: BaggageComplianceCardProps) {
               AI Güven Skoru:{" "}
               <span className="font-semibold text-slate-300">%{baggage.confidenceScore}</span>
             </p>
+            {baggage.source === "DEMO" && (
+              <p className="mt-1 text-[10px] font-semibold text-amber-400">Demo sonucu — doğrulanmış AI ölçümü değildir.</p>
+            )}
           </div>
         </div>
 

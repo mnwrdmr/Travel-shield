@@ -28,7 +28,7 @@
 // çakışmasını önler — "hybrid hydration" pattern.
 // ─────────────────────────────────────────────────────────────
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { RefreshCw, ScanLine, Shield } from "lucide-react";
 
@@ -41,7 +41,6 @@ import { SavingsCard }              from "@/components/dashboard/SavingsCard";
 import { AlternativeTransportCard } from "@/components/dashboard/AlternativeTransportCard";
 import { FeeBreakdownCard }         from "@/components/dashboard/FeeBreakdownCard";
 import { DashboardSkeleton }        from "@/components/dashboard/DashboardStates";
-import LegalDisclaimer               from "@/components/dashboard/LegalDisclaimer";
 
 import type { AnalysisResult, BaggageAnalysis } from "@/types/travel";
 
@@ -53,14 +52,24 @@ const LS_KEYS = {
 
 // ─── localStorage yardımcıları ────────────────────────────────
 
+const dashboardCache: Record<string, { raw: string | null; parsed: unknown }> = {};
+
 function readFromStorage<T>(key: string): T | null {
   try {
+    if (typeof window === "undefined") return null;
     const raw = localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as T) : null;
+    if (dashboardCache[key] && dashboardCache[key].raw === raw) {
+      return dashboardCache[key].parsed as T | null;
+    }
+    const parsed = raw ? (JSON.parse(raw) as T) : null;
+    dashboardCache[key] = { raw, parsed };
+    return parsed;
   } catch {
     return null;
   }
 }
+
+const subscribeToStorage = () => () => {};
 
 // ─── Prop tipleri ─────────────────────────────────────────────
 
@@ -158,22 +167,22 @@ export function DashboardClientWrapper({ initialAnalysis }: DashboardClientWrapp
   const router = useRouter();
   const { analysisResult, baggageResult, isLoading } = useTravel();
 
-  const [lsAnalysis, setLsAnalysis] = useState<AnalysisResult | null>(null);
-  const [lsBaggage,  setLsBaggage]  = useState<BaggageAnalysis | null>(null);
-  const [hydrated,   setHydrated]   = useState(false);
-
-  // localStorage'dan hydrate — client-only
-  useEffect(() => {
-    setLsAnalysis(readFromStorage<AnalysisResult>(LS_KEYS.analysis));
-    setLsBaggage(readFromStorage<BaggageAnalysis>(LS_KEYS.baggage));
-    setHydrated(true);
-  }, []);
+  const lsAnalysis = useSyncExternalStore(
+    subscribeToStorage,
+    () => readFromStorage<AnalysisResult>(LS_KEYS.analysis),
+    () => null,
+  );
+  const lsBaggage = useSyncExternalStore(
+    subscribeToStorage,
+    () => readFromStorage<BaggageAnalysis>(LS_KEYS.baggage),
+    () => null,
+  );
 
   // Veri öncelik sırası
   const activeAnalysis = analysisResult ?? lsAnalysis ?? initialAnalysis;
   const activeBaggage  = baggageResult  ?? lsBaggage  ?? initialAnalysis?.baggageAnalysis ?? null;
 
-  if (isLoading || !hydrated) return <DashboardSkeleton />;
+  if (isLoading) return <DashboardSkeleton />;
 
   if (!activeAnalysis && !activeBaggage) {
     return <EmptyState onNavigate={() => router.push("/analyze")} />;
@@ -214,7 +223,6 @@ export function DashboardClientWrapper({ initialAnalysis }: DashboardClientWrapp
         )}
       </div>
 
-      <LegalDisclaimer />
     </>
   );
 }

@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { Shield, Share2, ExternalLink, Code2, ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Shield, Share2, ExternalLink, Code2 } from "lucide-react";
 
 const footerLinks = {
   Ürün: [

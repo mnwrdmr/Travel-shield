@@ -30,8 +30,8 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useState,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
 
@@ -43,7 +43,9 @@ import type {
   Operator,
   RawFormInput,
   RiskAlert,
+  BackendScanResponse,
 } from "@/types/travel";
+import { getAirlineBaggagePolicy } from "@/lib/airline-policies";
 
 // ─────────────────────────────────────────────────────────────
 // Tip tanımları
@@ -61,6 +63,7 @@ interface TravelContextValue {
     dimensions?: BaggageDimensions,
     imageUrl?: string
   ) => Promise<BaggageAnalysis>;
+  saveBackendBaggageAnalysis: (operator: Operator | string, response: BackendScanResponse) => Promise<BaggageAnalysis>;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -72,40 +75,38 @@ const LS_KEYS = {
   baggage:  "ts_baggageResult_v1",
 } as const;
 
+const storageCache: Record<string, { raw: string | null; parsed: unknown }> = {};
+
 function storageSave(key: string, value: unknown): void {
-  try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* quota */ }
+  try {
+    const raw = JSON.stringify(value);
+    localStorage.setItem(key, raw);
+    storageCache[key] = { raw, parsed: value };
+  } catch { /* quota */ }
 }
 
 function storageLoad<T>(key: string): T | null {
   try {
+    if (typeof window === "undefined") return null;
     const raw = localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as T) : null;
+    if (storageCache[key] && storageCache[key].raw === raw) {
+      return storageCache[key].parsed as T | null;
+    }
+    const parsed = raw ? (JSON.parse(raw) as T) : null;
+    storageCache[key] = { raw, parsed };
+    return parsed;
   } catch { return null; }
 }
+
+const subscribeToStorage = () => () => {};
 
 // ─────────────────────────────────────────────────────────────
 // Havayolu veri katmanı (tek sorumluluk)
 // ─────────────────────────────────────────────────────────────
 
 /** Havayoluna göre kabin boyut limitleri ve kapı ücreti */
-const CABIN_LIMITS: Record<string, BaggageDimensions & { gateFee: number }> = {
-  THY:        { widthCm: 55, heightCm: 40, depthCm: 20, gateFee: 0  },
-  PEGASUS:    { widthCm: 55, heightCm: 40, depthCm: 20, gateFee: 50 },
-  AJET:       { widthCm: 55, heightCm: 40, depthCm: 20, gateFee: 45 },
-  SUNEXPRESS: { widthCm: 55, heightCm: 40, depthCm: 20, gateFee: 45 },
-  CORENDON:   { widthCm: 55, heightCm: 40, depthCm: 20, gateFee: 40 },
-  RYANAIR:    { widthCm: 40, heightCm: 20, depthCm: 25, gateFee: 70 },
-  WIZZAIR:    { widthCm: 40, heightCm: 30, depthCm: 20, gateFee: 80 },
-  EASYJET:    { widthCm: 56, heightCm: 45, depthCm: 25, gateFee: 48 },
-  TRENITALIA: { widthCm: 80, heightCm: 50, depthCm: 30, gateFee: 0  },
-  SNCF:       { widthCm: 70, heightCm: 50, depthCm: 30, gateFee: 0  },
-  DB:         { widthCm: 70, heightCm: 50, depthCm: 30, gateFee: 0  },
-  OBB:        { widthCm: 70, heightCm: 50, depthCm: 30, gateFee: 0  },
-  FLIXBUS:    { widthCm: 67, heightCm: 42, depthCm: 27, gateFee: 0  },
-};
-
 function getCabinLimits(operator: string) {
-  return CABIN_LIMITS[operator.toUpperCase()] ?? CABIN_LIMITS["RYANAIR"];
+  return getAirlineBaggagePolicy(operator);
 }
 
 /** Havayoluna göre risk uyarıları */
@@ -321,7 +322,8 @@ function buildBaggageResult(
     overageCm:       { width: ow, height: oh, depth: od },
     potentialGateFee: gateFee,
     currency:        "EUR",
-    confidenceScore: dimensions ? 0.95 : 0.85,
+    confidenceScore: dimensions ? 95 : 85,
+    source:          dimensions ? "MANUAL" : "DEMO",
     imageUrl,
     recommendations,
   };
@@ -339,15 +341,7 @@ const SIMULATION_DELAY_MS = {
 // Context
 // ─────────────────────────────────────────────────────────────
 
-const TravelContext = createContext<TravelContextValue>({
-  analysisResult:     null,
-  baggageResult:      null,
-  isLoading:          false,
-  isBaggageAnalyzing: false,
-  error:              null,
-  runAiSimulation:        async () => {},
-  runBaggageAiSimulation: async () => ({} as BaggageAnalysis),
-});
+const TravelContext = createContext<TravelContextValue | null>(null);
 
 // ─────────────────────────────────────────────────────────────
 // Provider
@@ -360,13 +354,19 @@ export function TravelProvider({ children }: { children: ReactNode }) {
   const [isBaggageAnalyzing, setIsBaggageAnalyzing] = useState(false);
   const [error,              setError]              = useState<string | null>(null);
 
-  // Client-side localStorage hydration
-  useEffect(() => {
-    const savedAnalysis = storageLoad<AnalysisResult>(LS_KEYS.analysis);
-    const savedBaggage  = storageLoad<BaggageAnalysis>(LS_KEYS.baggage);
-    if (savedAnalysis) setAnalysisResult(savedAnalysis);
-    if (savedBaggage)  setBaggageResult(savedBaggage);
-  }, []);
+  // React supplies the null server snapshot during hydration, then reads the
+  // browser store without an effect-driven state update.
+  const storedAnalysis = useSyncExternalStore(
+    subscribeToStorage,
+    () => storageLoad<AnalysisResult>(LS_KEYS.analysis),
+    () => null,
+  );
+  const storedBaggage = useSyncExternalStore(
+    subscribeToStorage,
+    () => storageLoad<BaggageAnalysis>(LS_KEYS.baggage),
+    () => null,
+  );
+  const activeBaggage = baggageResult ?? storedBaggage;
 
   // ── Bilet analiz simülasyonu ─────────────────────────────
   const runAiSimulation = useCallback(async (formData: RawFormInput) => {
@@ -376,7 +376,7 @@ export function TravelProvider({ children }: { children: ReactNode }) {
     try {
       await new Promise((resolve) => setTimeout(resolve, SIMULATION_DELAY_MS.ticket));
 
-      const result = buildAnalysisResult(formData, baggageResult);
+      const result = buildAnalysisResult(formData, activeBaggage);
       setAnalysisResult(result);
       storageSave(LS_KEYS.analysis, result);
     } catch (err) {
@@ -384,7 +384,7 @@ export function TravelProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [baggageResult]);
+  }, [activeBaggage]);
 
   // ── Bagaj AI simülasyonu ─────────────────────────────────
   const runBaggageAiSimulation = useCallback(
@@ -409,16 +409,49 @@ export function TravelProvider({ children }: { children: ReactNode }) {
     []
   );
 
+  const saveBackendBaggageAnalysis = useCallback(async (
+    operator: Operator | string,
+    response: BackendScanResponse,
+  ): Promise<BaggageAnalysis> => {
+    const fallbackLimits = getCabinLimits(operator);
+    const detected = response.detected_dimensions ?? {
+      width_cm: fallbackLimits.widthCm,
+      height_cm: fallbackLimits.heightCm,
+      depth_cm: fallbackLimits.depthCm,
+    };
+    const allowed = response.allowed_dimensions ?? {
+      width_cm: fallbackLimits.widthCm,
+      height_cm: fallbackLimits.heightCm,
+      depth_cm: fallbackLimits.depthCm,
+    };
+    const result: BaggageAnalysis = {
+      id: `baggage_${Date.now()}`,
+      status: response.status === "FAIL" ? "OVERSIZED" : response.status === "WARNING" ? "WARNING" : "COMPLIANT",
+      detectedDimensions: { widthCm: detected.width_cm, heightCm: detected.height_cm, depthCm: detected.depth_cm },
+      allowedDimensions: { widthCm: allowed.width_cm, heightCm: allowed.height_cm, depthCm: allowed.depth_cm },
+      overageCm: response.overage_cm ? { width: response.overage_cm.width_cm, height: response.overage_cm.height_cm, depth: response.overage_cm.depth_cm } : undefined,
+      potentialGateFee: response.potential_gate_fee_eur ?? 0,
+      currency: "EUR",
+      confidenceScore: Math.round((response.confidence_score ?? 0) * 100),
+      source: response.analysis_source === "demo" ? "DEMO" : "AI",
+      recommendations: response.recommendations ?? [response.message],
+    };
+    setBaggageResult(result);
+    storageSave(LS_KEYS.baggage, result);
+    return result;
+  }, []);
+
   return (
     <TravelContext.Provider
       value={{
-        analysisResult,
-        baggageResult,
+        analysisResult: analysisResult ?? storedAnalysis,
+        baggageResult: baggageResult ?? storedBaggage,
         isLoading,
         isBaggageAnalyzing,
         error,
         runAiSimulation,
         runBaggageAiSimulation,
+        saveBackendBaggageAnalysis,
       }}
     >
       {children}

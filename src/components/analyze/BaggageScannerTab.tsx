@@ -29,20 +29,9 @@ import { Luggage, Ruler, ScanLine, Sliders } from "lucide-react";
 import LuggageScanner from "@/components/LuggageScanner";
 import { Button }     from "@/components/ui/button";
 import type { BackendScanResponse, BaggageDimensions, Operator } from "@/types/travel";
+import { getAirlineBaggagePolicy } from "@/lib/airline-policies";
 
 // ─── Sabitler ────────────────────────────────────────────────
-
-/** Havayoluna göre kabin limitleri ve kapı ücreti */
-const CABIN_LIMITS: Record<string, BaggageDimensions & { gateFee: number }> = {
-  THY:        { widthCm: 55, heightCm: 40, depthCm: 20, gateFee: 0  },
-  PEGASUS:    { widthCm: 55, heightCm: 40, depthCm: 20, gateFee: 50 },
-  AJET:       { widthCm: 55, heightCm: 40, depthCm: 20, gateFee: 45 },
-  SUNEXPRESS: { widthCm: 55, heightCm: 40, depthCm: 20, gateFee: 45 },
-  CORENDON:   { widthCm: 55, heightCm: 40, depthCm: 20, gateFee: 40 },
-  RYANAIR:    { widthCm: 40, heightCm: 20, depthCm: 25, gateFee: 70 },
-  WIZZAIR:    { widthCm: 40, heightCm: 30, depthCm: 20, gateFee: 80 },
-  EASYJET:    { widthCm: 56, heightCm: 45, depthCm: 25, gateFee: 48 },
-};
 
 const AIRLINES: { value: Operator; label: string; group: string }[] = [
   { value: "THY",        label: "Turkish Airlines (THY)", group: "Türk Havayolları" },
@@ -175,7 +164,7 @@ export function BaggageScannerTab({
 }: BaggageScannerTabProps) {
   const [tabMode, setTabMode] = useState<TabMode>("camera");
 
-  const limits = CABIN_LIMITS[operator.toUpperCase()] ?? CABIN_LIMITS["RYANAIR"];
+  const limits = getAirlineBaggagePolicy(operator);
 
   // Manuel boyut state'i — her boyut için limit + %40 üst sınır
   const [dims, setDims] = useState<BaggageDimensions>({

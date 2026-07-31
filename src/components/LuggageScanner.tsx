@@ -14,7 +14,7 @@
  *  - BackendScanResponse tipi
  */
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   AlertTriangle,
   CheckCircle,
@@ -24,6 +24,7 @@ import {
   XCircle,
 } from "lucide-react";
 import type { BackendScanResponse } from "@/types/travel";
+import { getAirlineBaggagePolicy } from "@/lib/airline-policies";
 
 // ─── Sabitler ────────────────────────────────────────────────
 
@@ -33,6 +34,7 @@ const BACKEND_URL =
 const SCAN_ENDPOINT = `${BACKEND_URL}/api/v1/scan-luggage`;
 
 const ALLOWED_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 
 const STATUS_CONFIG = {
   PASS: {
@@ -72,30 +74,19 @@ function isAllowedMimeType(type: string): boolean {
 
 // ─── Airline cabin limits for mock fallback ──────────────────
 
-const CABIN_LIMITS_MOCK: Record<string, { w: number; h: number; d: number; fee: number }> = {
-  RYANAIR:    { w: 40, h: 20, d: 25, fee: 70 },
-  WIZZAIR:    { w: 40, h: 30, d: 20, fee: 80 },
-  EASYJET:    { w: 56, h: 45, d: 25, fee: 48 },
-  THY:        { w: 55, h: 23, d: 40, fee: 60 },
-  PEGASUS:    { w: 55, h: 20, d: 40, fee: 50 },
-  AJET:       { w: 55, h: 20, d: 40, fee: 50 },
-  SUNEXPRESS: { w: 55, h: 20, d: 40, fee: 45 },
-  CORENDON:   { w: 55, h: 20, d: 40, fee: 45 },
-};
-
 /** Generates a realistic mock scan result when backend is unavailable */
 function generateMockScanResult(operator: string): BackendScanResponse {
-  const limits = CABIN_LIMITS_MOCK[operator.toUpperCase()] ?? CABIN_LIMITS_MOCK.RYANAIR;
+  const limits = getAirlineBaggagePolicy(operator);
   // Simulated detected dimensions: slightly exceeding width & height
   const detected = {
-    width_cm:  limits.w + 2,
-    height_cm: limits.h + 2,
-    depth_cm:  limits.d,
+    width_cm:  limits.widthCm + 2,
+    height_cm: limits.heightCm + 2,
+    depth_cm:  limits.depthCm,
   };
   const allowed = {
-    width_cm:  limits.w,
-    height_cm: limits.h,
-    depth_cm:  limits.d,
+    width_cm:  limits.widthCm,
+    height_cm: limits.heightCm,
+    depth_cm:  limits.depthCm,
   };
   const overage = {
     width_cm:  2,
@@ -109,11 +100,12 @@ function generateMockScanResult(operator: string): BackendScanResponse {
     detected_dimensions: detected,
     allowed_dimensions: allowed,
     overage_cm: overage,
-    potential_gate_fee_eur: limits.fee,
+    potential_gate_fee_eur: limits.gateFee,
     confidence_score: 0.87,
+    analysis_source: "demo",
     recommendations: [
-      `${operator} kabin bagaj limiti: ${limits.w}×${limits.h}×${limits.d} cm — bavulunuz genişlik ve yükseklikte 2 cm aşıyor.`,
-      `Kapıda €${limits.fee} ceza riski var. Online kabin bagajı yükseltmesi ile €${Math.max(limits.fee - 18, 0)} tasarruf edebilirsiniz.`,
+      `${operator} kabin bagaj limiti: ${limits.widthCm}×${limits.heightCm}×${limits.depthCm} cm — bavulunuz genişlik ve yükseklikte 2 cm aşıyor.`,
+      `Kapıda €${limits.gateFee} ceza riski var. Online kabin bagajı yükseltmesi ile €${Math.max(limits.gateFee - 18, 0)} tasarruf edebilirsiniz.`,
       "⚠ Demo Modu: AI sunucu şu anda meşgul, sonuçlar simülasyon verileridir.",
     ],
   };
@@ -138,7 +130,7 @@ async function postImageToBackend(
       const errorBody = await response.json().catch(() => ({ detail: "Sunucu hatası" }));
       // If backend returned quota/rate-limit error, fall back to mock
       const detail = errorBody?.detail ?? "";
-      if (response.status === 429 || String(detail).includes("quota") || String(detail).includes("RESOURCE_EXHAUSTED")) {
+      if (response.status === 429 || response.status >= 500 || String(detail).includes("quota") || String(detail).includes("RESOURCE_EXHAUSTED")) {
         console.warn("Backend AI kota aşımı — demo moduna geçiliyor");
         return generateMockScanResult(operator);
       }
@@ -377,14 +369,24 @@ function CompatibilityCard({ result, operator }: CompatibilityCardProps) {
       )}
 
       {/* CTA */}
-      {isFail && (
+      <div className="space-y-2 pt-1">
+        {isFail && (
+          <button
+            type="button"
+            className="w-full rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-bold text-slate-950 transition-all hover:bg-emerald-400 active:scale-95"
+          >
+            🛒 €18'e Online Kabin Bagajı Ekle
+          </button>
+        )}
         <button
           type="button"
-          className="w-full rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-bold text-slate-950 transition-all hover:bg-emerald-400 active:scale-95"
+          onClick={() => { window.location.href = "/dashboard"; }}
+          className="w-full flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 py-2.5 text-xs font-bold text-zinc-100 transition-all hover:bg-white/15 active:scale-95"
         >
-          🛒 €18'e Online Kabin Bagajı Ekle
+          <span>📊 Full Dashboard Raporunu Gör</span>
+          <span>→</span>
         </button>
-      )}
+      </div>
     </div>
   );
 }
@@ -396,6 +398,8 @@ export default function LuggageScanner({
   onScanComplete,
 }: LuggageScannerProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const objectUrlRef = useRef<string | null>(null);
+  const requestIdRef = useRef(0);
 
   const [preview,    setPreview]   = useState<string | null>(null);
   const [scanStatus, setScanStatus] = useState<ScanStatus>("idle");
@@ -403,7 +407,16 @@ export default function LuggageScanner({
   const [dragOver,   setDragOver]  = useState(false);
   const [errorMsg,   setErrorMsg]  = useState<string | null>(null);
 
+  const revokePreview = useCallback(() => {
+    if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
+    objectUrlRef.current = null;
+  }, []);
+
+  useEffect(() => () => revokePreview(), [revokePreview]);
+
   const reset = () => {
+    requestIdRef.current += 1;
+    revokePreview();
     setScanStatus("idle");
     setPreview(null);
     setResult(null);
@@ -418,18 +431,30 @@ export default function LuggageScanner({
         setScanStatus("error");
         return;
       }
+      if (file.size > MAX_FILE_SIZE_BYTES) {
+        setErrorMsg("Görsel 10 MB sınırını aşıyor. Lütfen daha küçük bir dosya seçin.");
+        setScanStatus("error");
+        return;
+      }
 
-      setPreview(URL.createObjectURL(file));
+      requestIdRef.current += 1;
+      const requestId = requestIdRef.current;
+      revokePreview();
+      const previewUrl = URL.createObjectURL(file);
+      objectUrlRef.current = previewUrl;
+      setPreview(previewUrl);
       setScanStatus("loading");
       setResult(null);
       setErrorMsg(null);
 
       try {
         const data = await postImageToBackend(file, operator);
+        if (requestId !== requestIdRef.current) return;
         setResult(data);
         setScanStatus(data.is_luggage ? "success" : "not_luggage");
         onScanComplete?.(data);
       } catch (err) {
+        if (requestId !== requestIdRef.current) return;
         const message = err instanceof Error
           ? err.message
           : "Bağlantı hatası — backend çalışıyor mu?";
@@ -437,7 +462,7 @@ export default function LuggageScanner({
         setScanStatus("error");
       }
     },
-    [operator, onScanComplete]
+    [operator, onScanComplete, revokePreview]
   );
 
   const handleDrop = (e: React.DragEvent) => {

@@ -4,7 +4,7 @@
  * @file RagKnowledgeCard.tsx
  * @description Yapay Zeka RAG (Retrieval-Augmented Generation) Mevzuat & Ceza Sorgu Bileşeni.
  *
- * Havayolu resmi sözleşme ve kural maddelerini doğrudan bilgi tabanından (knowledge base) çeker
+ * Havayolu politika anlık görüntülerini bilgi tabanından (knowledge base) çeker
  * ve kullanıcılara gerekçeli, madde atıflı resmi yanıtlar sunar.
  */
 
@@ -57,6 +57,7 @@ export default function RagKnowledgeCard() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: searchQuery, operator: searchOp }),
+        signal: AbortSignal.timeout(15_000),
       });
 
       if (!res.ok) {
@@ -66,25 +67,9 @@ export default function RagKnowledgeCard() {
       const data: RagResponse = await res.json();
       setResult(data);
     } catch (err) {
-      console.warn("RAG sorgusu fallback'e düşüyor:", err);
-      // Fallback RAG response if backend fails
-      setResult({
-        query: searchQuery,
-        operator: searchOp,
-        retrieved_chunks: [
-          {
-            id: "DEMO_01",
-            operator: searchOp || "GENEL",
-            category: "BAGGAGE",
-            title: `${searchOp || 'Havayolu'} Taşıma Sözleşmesi Bagaj Hükümleri`,
-            clause_ref: `${searchOp || 'Resmi'} Kural Madde 4.2`,
-            content: "Kabin bagajı boyut sınırları aşıldığında kapı kontuarında ek ceza bedeli uygulanarak çanta kargo bölümüne gönderilir.",
-          },
-        ],
-        answer: `**RAG Mevzuat Sorgusu Sonucu (${searchOp || 'Genel'}):**\n\n📌 **${searchOp || 'Havayolu'} Taşıma Sözleşmesi Madde 4.2 Uyarınca:**\nKabin bagajı limit aşımında kapıda ceza uygulanır. Online biletleme esnasında ek bagaj satın alınması %60-70 daha ekonomiktir.`,
-        citations: [`${searchOp || 'Resmi'} - Madde 4.2: Taşıma Sözleşmesi`],
-        is_demo: true,
-      });
+      console.warn("RAG sorgusu başarısız:", err);
+      setResult(null);
+      setErrorMsg("Mevzuat servisine şu anda ulaşılamıyor. Doğrulanmamış bir yanıt göstermek yerine lütfen tekrar deneyin.");
     } finally {
       setIsLoading(false);
     }
@@ -107,7 +92,7 @@ export default function RagKnowledgeCard() {
               </span>
             </div>
             <p className="text-xs text-slate-400">
-              Resmi havayolu sözleşmelerinden doğrudan kural maddeleri (retrieval) ve gerekçeli AI yanıtı
+              Politika anlık görüntülerinden kaynaklı retrieval ve gerekçeli AI yanıtı
             </p>
           </div>
         </div>
@@ -141,6 +126,7 @@ export default function RagKnowledgeCard() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            maxLength={600}
             placeholder="Örn: THY el bagajı sınırı nedir ve kapı cezası ne kadar?"
             className="w-full rounded-xl border border-slate-800 bg-slate-950/80 pl-10 pr-4 py-2.5 text-xs sm:text-sm text-slate-200 placeholder:text-slate-500 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 transition-all"
           />
@@ -163,6 +149,12 @@ export default function RagKnowledgeCard() {
           )}
         </button>
       </form>
+
+      {errorMsg && (
+        <p role="alert" className="rounded-lg border border-red-500/20 bg-red-500/5 px-3 py-2 text-xs text-red-300">
+          {errorMsg}
+        </p>
+      )}
 
       {/* Quick Chips */}
       <div className="flex flex-wrap items-center gap-2 pt-1">
@@ -193,7 +185,7 @@ export default function RagKnowledgeCard() {
             </div>
             {result.is_demo && (
               <span className="text-[10px] font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded">
-                RAG Modu
+                Demo / fallback — resmi doğrulama gerekli
               </span>
             )}
           </div>
@@ -208,7 +200,7 @@ export default function RagKnowledgeCard() {
             <div className="space-y-2 pt-1">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-purple-300/80 flex items-center gap-1.5">
                 <FileText size={12} />
-                Doğrudan Çekilen Resmi Sözleşme Maddeleri (Retrieval):
+                Çekilen politika anlık görüntüleri (Retrieval):
               </p>
               <div className="grid grid-cols-1 gap-2">
                 {result.retrieved_chunks.map((chunk, i) => (
@@ -221,6 +213,15 @@ export default function RagKnowledgeCard() {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {result.citations.length > 0 && (
+            <div className="space-y-1 text-[11px] text-slate-400">
+              <p className="font-semibold uppercase tracking-wider text-purple-300/80">Atıflar</p>
+              <ul className="list-inside list-disc space-y-1">
+                {result.citations.map((citation) => <li key={citation}>{citation}</li>)}
+              </ul>
             </div>
           )}
         </div>
