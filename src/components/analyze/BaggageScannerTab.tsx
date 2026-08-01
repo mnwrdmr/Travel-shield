@@ -254,34 +254,6 @@ export function BaggageScannerTab({
             operator={operator}
             onScanComplete={handleFastApiResult}
           />
-
-          {/* AR bounding box özeti */}
-          <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-3">
-            <p className="mb-1.5 flex items-center gap-2 text-[11px] font-semibold text-zinc-400">
-              <Ruler size={12} className="text-[var(--color-primary)]" aria-hidden />
-              Boyut Rozetleri (AR Simülasyonu)
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {DIMENSIONS.map(({ key, label, limitKey }) => {
-                const value = dims[key];
-                const lim   = limits[limitKey];
-                const over  = value > lim;
-                return (
-                  <span
-                    key={key}
-                    className={[
-                      "rounded-lg border px-2.5 py-1 font-mono text-xs font-bold",
-                      over
-                        ? "border-red-500/30 bg-red-500/10 text-red-400"
-                        : "border-emerald-500/30 bg-emerald-500/10 text-emerald-400",
-                    ].join(" ")}
-                  >
-                    {label.split(" ")[0]}: {value} cm{over ? ` ⚠ +${value - lim}` : " ✓"}
-                  </span>
-                );
-              })}
-            </div>
-          </div>
         </div>
       )}
 
