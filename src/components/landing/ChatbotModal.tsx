@@ -86,8 +86,14 @@ export default function ChatbotModal() {
       const data = await res.json();
       const answerText = data.answer || "Bu konuda kural veya mevzuat maddesi bulunamadı.";
 
-      // Include citations if available
+      // Include citations and mode badge if available
       let finalText = answerText;
+      if (data.badge) {
+        finalText = `[${data.badge}]\n\n` + finalText;
+      } else if (data.is_demo) {
+        finalText = `[⚡ Mevzuat Modu]\n\n` + finalText;
+      }
+
       if (Array.isArray(data.citations) && data.citations.length > 0) {
         finalText += "\n\n📌 **Resmi Madde Atıfları:**\n" + data.citations.map((c: string) => `• ${c}`).join("\n");
       }

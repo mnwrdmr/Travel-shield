@@ -27,13 +27,21 @@ from pydantic import BaseModel, Field
 logger = logging.getLogger(__name__)
 
 # ─────────────────────────────────────────────────────────────
-# Kullanılabilir Gemini modelleri (2026 güncel, öncelik sırasına göre)
-# ─────────────────────────────────────────────────────────────
-GEMINI_MODELS = [
-    "gemini-2.0-flash-lite",
-    "gemini-2.0-flash",
-    "gemini-1.5-flash-8b",
-]
+def get_gemini_vision_models() -> list[str]:
+    primary = os.getenv("GEMINI_VISION_MODEL", "gemini-3.6-flash")
+    fallbacks = [
+        primary,
+        "gemini-3.6-flash",
+        "gemini-3.5-flash",
+        "gemini-flash-latest",
+        "gemini-3-flash-preview",
+        "gemini-3.1-flash-lite",
+    ]
+    # Remove duplicates preserving order
+    seen = set()
+    return [m for m in fallbacks if not (m in seen or seen.add(m))]
+
+GEMINI_MODELS = get_gemini_vision_models()
 
 MAX_RETRY_WAIT_SEC = 30
 

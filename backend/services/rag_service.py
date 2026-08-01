@@ -203,9 +203,9 @@ Aşağıda sunulan resmi mevzuat ve havayolu sözleşme maddelerini (CONTEXT) es
 """
 
     models_to_try = [
+        "gemini-3-flash-preview",
         "gemini-2.0-flash-lite",
         "gemini-2.0-flash",
-        "gemini-1.5-flash-8b",
     ]
 
     client = genai.Client(api_key=api_key)

@@ -241,30 +241,78 @@ ${qRaw} (Operatör: ${opClean || "Genel"})
 3. Yanıtı Türkçe, kısa, anlaşılır ve madde işaretli olarak formatla.
 `;
 
-      const geminiRes = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: promptStr }] }],
-            generationConfig: { temperature: 0.2, maxOutputTokens: 600 },
-          }),
-        }
-      );
+      // Model konfigürasyonu env vars üzerinden okunur (sabit model ismi yazılmaz)
+      const primaryModel = process.env.GEMINI_TEXT_MODEL || "gemini-3.6-flash";
+      const GEMINI_MODELS = Array.from(new Set([
+        primaryModel,
+        "gemini-3.6-flash",
+        "gemini-3.5-flash",
+        "gemini-flash-latest",
+        "gemini-3-flash-preview",
+        "gemini-3.1-flash-lite",
+      ]));
 
-      if (geminiRes.ok) {
-        const geminiData = await geminiRes.json();
-        const llmAnswer = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (llmAnswer) {
-          return NextResponse.json({
-            query: qRaw,
-            operator: opClean,
-            retrieved_chunks: chunks,
-            answer: llmAnswer.trim(),
-            citations,
-            is_demo: false,
-          });
+      for (const model of GEMINI_MODELS) {
+        let retries = 0;
+        const maxRetries = 2;
+
+        while (retries <= maxRetries) {
+          try {
+            const geminiRes = await fetch(
+              `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  contents: [{ parts: [{ text: promptStr }] }],
+                  generationConfig: { temperature: 0.2, maxOutputTokens: 600 },
+                }),
+                signal: AbortSignal.timeout(12_000),
+              }
+            );
+
+            if (geminiRes.ok) {
+              const geminiData = await geminiRes.json();
+              const llmAnswer = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
+              if (llmAnswer) {
+                return NextResponse.json({
+                  query: qRaw,
+                  operator: opClean,
+                  retrieved_chunks: chunks,
+                  answer: llmAnswer.trim(),
+                  citations,
+                  is_demo: false,
+                  model_used: model,
+                  badge: "🤖 Gemini AI Canlı Yanıt",
+                });
+              }
+            }
+
+            // 503 (temporary high demand) → kısa bekle ve tekrar dene
+            if (geminiRes.status === 503 && retries < maxRetries) {
+              retries++;
+              await new Promise(r => setTimeout(r, 800 * retries));
+              continue;
+            }
+
+            // 404 (model retired) veya 429 (quota) → sonraki modele geç
+            if (geminiRes.status === 404) {
+              console.warn(`[rag-query] Model ${model} bulunamadı (404), sonraki modele geçiliyor.`);
+              break;
+            }
+            if (geminiRes.status === 429) {
+              console.warn(`[rag-query] Model ${model} kota aşımı (429), sonraki modele geçiliyor.`);
+              break;
+            }
+
+            break;
+          } catch (err) {
+            console.warn(`[rag-query] Model ${model} bağlantı/timeout hatası:`, err);
+            retries++;
+            if (retries <= maxRetries) {
+              await new Promise(r => setTimeout(r, 500));
+            }
+          }
         }
       }
     }
