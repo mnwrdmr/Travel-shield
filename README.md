@@ -211,3 +211,122 @@ Onay Durumu: Ürün, Sprint 2 için belirlenen "Uçtan uca durum yönetimli (sta
 # Sprint 3
 
 ---
+
+## Takım İsmi
+Takım Travel-shield
+
+## Takım Rolleri
+
+Münevver Demir:  Scrum Master/Team Member/Developer    
+Abdülaziz Kıran:  Product Owner/Team Member/Developer       
+Yasin Ünsal:  Team Member/Developer       
+
+## Ürün İsmi
+
+--Travel-Shield--
+
+## Ürün Açıklaması
+
+-**Travel Shield AI**, havayolu seyahatlerinde yaşanan kafa karıştırıcı bagaj kurallarını, beklenmedik kapı cezalarını (*gate fees*) ve bilet risklerini ortadan kaldıran yapay zeka destekli bir seyahat asistanı ve finansal risk analiz platformudur.
+
+Platform; uçuş ve bilet verilerini, görsel bagaj taramasını (**Vision AI**) ve taşıyıcı kural veritabanını (**RAG Engine**) birleştirerek seyahat öncesinde kullanıcıya potansiyel cezaları bildirir, cüzdanını korur ve anlık, açıklanabilir finansal tasarruf çözümleri sunar.
+
+## Ürün Özellikleri
+
+- **Multi-Agent Baggage Scanner:** Kamera veya fotoğraf yüklemesi üzerinden bagaj boyutlarını tespit eden, AR 3D boyut rozetleri ile limit aşımlarını görselleştiren altyapı.
+- **Dynamic RAG Engine:** Havayolu özelinde (Ryanair, EasyJet, Wizz Air vb.) bagaj boyutları ve kapı cezalarını anlık sorgulayan kural veritabanı.
+- **Unified Wizard Flow:** Uçuş bilgileri ile gerçek bagaj ölçülerini tek bir sıralı formda eşleştiren analiz akışı.
+- **Explainable Financial Risk Assessment:** Potansiyel kapı cezasını, kaçınılabilecek tutarı ve alternatif optimizasyon adımlarını gösteren Dashboard bileşenleri.
+- **Omnichannel Chatbot Simulator:** Telegram temalı, RAG API destekli canlı müşteri asistanı.
+
+---
+## Hedef Kitle
+
+- Gen Z & Millennial Bütçeli Gezginler  & Sırt Çantalılar: Ekstra 40€ bagaj veya check-in cezası ödemesi bütçesini tamamen sarsacak olan genç kitle.
+- Sık Seyahat Eden İş İnsanları/Dijital Göçmenler: Farklı havayollarının kurallarını akılda tutmakla vakit kaybetmek istemeyen profesyoneller.
+- Erasmus ve Değişim Programı Öğrencileri: Avrupa içinde bölgesel ulaşım ağlarını (Trenitalia, Ryanair) aktif kullanan öğrenciler.
+- Interrail Kullanıcıları:Sadece kabin/el bagajı ile seyahat eden ve kapıda sürpriz ücret ödemek istemeyen kullanıcılar.
+- Çoklu Modlu (Multimodal) Seyahat Edenler:Ryanair, EasyJet, Wizz Air gibi katı bagaj politikası uygulayan havayollarını tercih eden yolcular.
+- Seyahat planlamayı seven tüm kullanıcılar :Bilet ve bagaj risklerini tek panelden yönetmek isteyen profesyoneller.
+
+## Product Backlog URL
+
+https://trello.com/b/WQPd2syn/takim-127
+
+---
+
+# Sprint 3: 📋 Scrum ve Proje Yönetimi Raporu
+
+---
+### A. Backlog Dağıtma Mantığı : Backlog Düzeni & Story seçimleri & Görev Dağılımı (Efor: 52 SP)
+
+Backlog'umuz öncelikli story'lere göre düzenlenmiştir. Sprint başına tahmin edilen puan sayısını geçmeyecek şekilde sıradan seçimler yapılmaktadır. Story başına çıkan tahmin puanı, toplam puanın yarısından az tutulmuştur. Story'ler yapılacak işlere (task'lere) bölünmüştür. 
+Trello Board'da gözüken turuncu item'lar öncelikli yapılacak görevleri (task) gösterirken, mor item'ler turuncu adımlar tamamlandıktan sonra ki adımları, sarı item'ler proje yönetimi için ana adımları temsil etmektedir.  
+
+Süreç içerisinde git merge çakışmalarını (conflict) sıfıra indirmek adına görevler **sayfa rotalarına (routes) ve atomik bileşen mimarisine** göre bölünmüştür.
+
+| İş Kimliği | Görev / Kullanıcı Hikayesi                                                                                                                                                                                                                     | Sorumlu                    | Efor (SP) | İlgili Rota / Klasör |
+|------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------|-----------| --- |
+| **TS2-01** | **State Mimarisi:** `BaggageAnalysis`, `BaggageDimensions` ve `BaggageStatus` tiplerinin ve `localStorage` kalıcılık mekanizmasının `TravelContext`'e eklenmesi.                                                                               | Abdülaziz                  | 5 SP      | `src/types/travel.ts`, `src/context/TravelContext.tsx` |
+| **TS3-02** | **Landing & Chatbot RAG Entegrasyonu:** Chatbot üzerindeki hardcoded mantığın silinip `/api/v1/rag-query` API servisine bağlanması ve Landing Page Teaser bileşeninin yazılması.                                                               | Abdülaziz                  | 5 SP      | `src/components/landing/*`, `src/app/page.tsx` |
+| **TS3-03** | **Wizard Analiz Formu (UX)& Üst Bar UI:** Bilet verisi ve bagaj boyutlarını tek bir sıralı wizard formunda birleştiren giriş arayüzünün yapılması.üst bilgi ve yönlendirme barlarının (Progress & Header Bars) tasarımsal olarak düzenlenmesi. | Abdülaziz                  | 8 SP      | `src/app/analyze/*` |
+| **TS3-04** | **Baggage Vision & AR Rozetler:** Kamera/fotoğraf yükleme modülünün yazılması ve görsel üzerinde SVG/Canvas tabanlı AR 3D boyut rozetlerinin (42x22x25 cm) gösterilmesi.                                                                       | Münevver                   | 8 SP      | `src/components/analyze/BaggageScannerTab.tsx` |
+| **TS3-05** | **Real-Time Scan Veri Bağlantısı:** Görsel tarama sonucunda elde edilen boyutların analiz formuna ve `runBaggageAiSimulation` motoruna otomatik aktarılması.                                                                                   | Yasin                      | 3 SP      | `src/components/analyze/*` |
+| **TS3-06** | **Dashboard Uyum Kartı:** `BaggageComplianceCard.tsx` ile limit kıyaslama barlarının, €70 ceza uyarısının ve %94 AI Güven Skoru rozetinin tasarlanması.                                                                                        | Münevver                   | 8 SP      | `src/components/dashboard/BaggageComplianceCard.tsx` |
+| **TS3-07** | **Client State Sarmalayıcısı:** `DashboardClientWrapper.tsx` ile istemci tarafında veri senkronizasyonunun sağlanması ve sayfa yenileme hatalarının önlenmesi.                                                                                 | Münevver                   | 5 SP      | `src/components/dashboard/DashboardClientWrapper.tsx`, `src/app/dashboard/page.tsx` |
+| **TS3-08** | **Veri Tekilleştirme & Temizlik:** Havayolu limit verilerinin 4 ayrı dosya yerine `airline-policies.ts` dosyasından okunacak şekilde sadeleştirilmesi.                                                                                         | Münevver                   | 3 SP      | `src/lib/airline-policies.ts`, `src/lib/operator-meta.ts` |
+| **TS3-09** | **Türkiye Merkezli Havayolları & Veri Tekilleştirme:** THY, Pegasus, SunExpress, AJet gibi Türkiye merkezli taşıyıcı firmaların kural ve ceza veritabanına eklenmesi, kural verilerinin `airline-policies.ts` altında tekilleştirilmesi.       | Münevver                   | 5 SP | `src/lib/airline-policies.ts`, `src/lib/operator-meta.ts` |
+| **TS3-10** | **RAG Servis & Fallback Altyapısı:** API anahtarı eksiklikleri veya ağ kopmalarında uygulamanın çökmesini önleyen Demo Safety Guard (Fallback) mekanizmasının kurulması.                                                                       | Abdülaziz                  | 5 SP | `src/app/api/v1/rag-query/route.ts` |
+| **TS3-11** | **Hukuki Sorumluluk Reddi (Legal Disclaimer Banner):** Hukuki riskleri önlemek adına site genelinde ve analiz ekranında "Bu araç bir yapay zeka asistanıdır, verilen uyarılar bağlayıcı/resmi bildirim değildir" uyarısının eklenmesi.         | Münevver                   | 2 SP | `src/components/common/LegalDisclaimerBanner.tsx`, `src/app/layout.tsx` |
+| **TS3-12** | **Demo Hazırlığı&Ürünün Videosunun Hazırlanması:**                                                                                                                                                                                             | Abdülaziz, Münevver, Yasin | 8 SP | 
+---
+### B. Daily Scrum Notları- Sprint 3:
+Daily Scrum toplantılarında daha hızlı aksiyon alınması için WhatApp üzerinden ilerlenmiş, ekip üyelerinin müsait olduğu günlerde Slack üzerinden toplantı yapılmasına karar verilmiştir. Daily Scrum toplantısı örneği jpeg veya word olarak Readme'de tarafımızdan paylaşılmaktadır:
+[DailyScrumMeetingNotesSprint3.docx](ProjectManagment/Sprint3Documents/DailyScrumMeetingNotesSprint3.docx)
+
+
+### C. Sprint 3 Board Updates: Ekran görüntüleri
+![backlog_1.png](ProjectManagment/Sprint3Documents/backlog_1.png)
+![backlog_2.png](ProjectManagment/Sprint3Documents/backlog_2.png)
+![backlog_3.png](ProjectManagment/Sprint3Documents/backlog_3.png)
+![backlog_4.png](ProjectManagment/Sprint3Documents/backlog_4.png)
+![backlog_5.png](ProjectManagment/Sprint3Documents/backlog_5.png)
+![backlog_6.png](ProjectManagment/Sprint3Documents/backlog_6.png)
+
+### D. Ürün Durumu: Ekran görüntüleri
+
+
+
+Sprint 3 çıktıları itibarıyla ürün Persona'nın Seyahat Senaryosu üzerinden %100 çalışır durumdadır:
+Giriş: Persona, Ryanair uçuşu için bagaj fotoğrafını yükler.
+Görsel Algılama: Sistem çantayı 42×22×25 cm olarak tespit eder.
+Kural Eşleştirme (RAG): Ryanair kabin limiti olan 40×20×25 cm ile kıyaslanır (+2 cm yükseklik aşımı).
+Risk ve Çözüm:
+Tespit Edilen Ceza: €70 Kapı Ücreti (Gate Baggage Fee).
+Aksiyon: €18 Online Kabin Yükseltme Önerisi.
+Net Finansal Tasarruf: €52.
+
+Sprint 3 sonunda elde edilen ürün; kullanıcı girdilerine dinamik olarak tepki veren, durum yönetimli (stateful) ve çok kanallı (omnichannel) büyüme vizyonuna sahip üst segment bir frontend prototipidir. Sunucu ihtiyacı duymadan, istemci tarafında gelişmiş yapay zeka ajan tarama simülasyonunu başarıyla oluşturur.
+
+
+### E. Sprint Review:
+
+Neler Tamamlandı?: 
+* Bilet ve bagaj verilerini tek akışta birleştiren Wizard mimarisi devreye alındı.
+* Hardcoded chatbot yapısı, Gemini 2.5 tabanlı RAG API'ye bağlandı.
+* Olası ağ kopmalarında canlı sunumu korumak adına Demo Safety Fallback Guard eklendi.
+* Çift backend ve çakışan kural veritabanı temizlenerek kod mimarisi sadeleştirildi.
+
+Alınan Geri Bildirimler: Kapı cezası ve net tasarruf miktarının doğrudan Euro bazlı gösterilmesi finansal etkiyi görünür kılmıştır.
+
+Onay Durumu: Ürün, Sprint 3-Proje Kapanışı için belirlenen "Uçtan uca durum yönetimli (stateful) MVP prototipi ve omnichannel büyüme vizyonu" hedeflerinin tamamını eksiksiz karşıladığı için Ürün Sahibi (Product Owner) ve ekip üyeleri tarafından %100 başarıyla onaylanmış ve teslim alınmıştır.
+
+### F. Sprint Retrospective:
+
+* **🟢 Ne İyi Gitti?:** src/types/travel.ts veri kontratının kilitlenmesi, 3 geliştiricinin birbirini engellemeden paralel çalışmasını sağladı. Live Demo Safety Guard sayesinde sunum sırasında API kotası aşılsa bile uygulamanın çökmesi engellendi.
+  
+* **🔴 Ne Geliştirilebilir?:** Farklı dosyalarda tutulan veri alanları (4 ayrı policies tanımı) sprint başında fark edilip daha erken tekilleştirilebilirdi.
+  
+* **🛠️ Aksiyon Planı:** Proje sonlandırılarak jüriye demo sunumu yapıldı, Bootcamp Kapanışı gerçekleştirilip ürün teslim edildi.
+
+---
