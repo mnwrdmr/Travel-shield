@@ -136,6 +136,30 @@ const LOCAL_KNOWLEDGE_BASE: PolicyChunk[] = [
     clause_ref: "Trenitalia Regolamento Bagagli 2024",
     content: "Trenitalia Frecciarossa ve Frecciargento trenlerinde bagaj limiti kişi başı 2 adet büyüklük sınırı (toplam boyut 183 cm) gözetilmeksizin bagajdır. Sınırı aşan veya koridorları kapatan bagajlara €50 tren içi ceza uygulanır.",
   },
+  {
+    id: "FLIXBUS_BAG_01",
+    operator: "FLIXBUS",
+    category: "BAGGAGE",
+    title: "FlixBus Bagaj Limitleri ve Ücret Politikası",
+    clause_ref: "FlixBus Bagaj Şartları Madde 3.1",
+    content: "FlixBus biletlerine 1 adet el bagajı (maks 42x30x18 cm, 7 kg) ve 1 adet kargo bagajı (maks 80x50x30 cm, 20 kg) dahildir. Ek kargo bagajı bilet alma esnasında €3-€5 karşılığında eklenebilir.",
+  },
+  {
+    id: "GENERAL_LIQUIDS_01",
+    operator: "GENEL",
+    category: "LIQUIDS",
+    title: "Kabin Bagajında Sıvı Kısıtlamaları ve Kuralları (100 ml Sınırı)",
+    clause_ref: "ICAO / SHGM Güvenlik Talimatı Madde 12",
+    content: "Kabin bagajında taşınacak tüm sıvılar, jeller ve aerosoller en fazla 100 ml (100 gr) kapasiteli bireysel kaplarda olmalıdır. Bu kapların tamamı, toplam hacmi 1 litreyi geçmeyen (yaklaşık 20x20 cm) şeffaf ve kilitli bir poşet içinde güvenlik kontrolünden geçirilmelidir. 100 ml'yi aşan sıvılar kargo bagajına verilmelidir; aksi takdirde güvenlikte el konulur. Bebek maması ve ilaçlar muaf tutulabilir.",
+  },
+  {
+    id: "GENERAL_ELECTRONICS_01",
+    operator: "GENEL",
+    category: "ELECTRONICS",
+    title: "Lityum Piller, Powerbank ve Elektronik Cihaz Kuralları",
+    clause_ref: "IATA Tehlikeli Maddeler Düzenlemesi DGR 2.3",
+    content: "Taşınabilir şarj cihazları (Powerbank), yedek lityum iyon piller ve e-sigaralar KESİNLİKLE uçak kargo bagajına (uçak altına) verilemez; yalnızca el/kabin bagajında taşınmalıdır. Maksimum 100 Wh kapasiteye izin verilir. Dizüstü bilgisayar ve tabletler güvenlik aramasında ayrı tepside taranmalıdır.",
+  },
 ];
 
 const OPERATOR_ALIASES: Record<string, string> = {
@@ -148,6 +172,7 @@ const OPERATOR_ALIASES: Record<string, string> = {
   ryanair: "RYANAIR", ryr: "RYANAIR",
   easyjet: "EASYJET", ezy: "EASYJET",
   trenitalia: "TRENITALIA",
+  flixbus: "FLIXBUS",
 };
 
 function detectOperatorInQuery(query: string): string {
@@ -159,14 +184,12 @@ function detectOperatorInQuery(query: string): string {
 }
 
 function getLocalRagFallback(searchQuery: string, searchOp: string): RagResponse {
-  // Etkin operatör: önce sorgu metnindeki havayolu, yoksa dropdown seçimi.
   const opClean = detectOperatorInQuery(searchQuery) || searchOp.toUpperCase();
   const qLower = searchQuery.toLowerCase();
   const qTokens = qLower.replace(/[^\w\sğüşıöçĞÜŞİÖÇ]/g, "").split(/\s+/).filter((t) => t.length > 1);
 
-  // Operatör biliniyorsa yalnızca o havayolunun maddeleri içinde ara.
   const searchPool = opClean
-    ? LOCAL_KNOWLEDGE_BASE.filter((i) => i.operator.toUpperCase() === opClean)
+    ? LOCAL_KNOWLEDGE_BASE.filter((i) => i.operator.toUpperCase() === opClean || i.operator.toUpperCase() === "GENEL")
     : LOCAL_KNOWLEDGE_BASE;
   const pool = searchPool.length > 0 ? searchPool : LOCAL_KNOWLEDGE_BASE;
 
@@ -179,19 +202,14 @@ function getLocalRagFallback(searchQuery: string, searchOp: string): RagResponse
 
     const corpus = (item.title + " " + item.content + " " + item.category + " " + item.clause_ref).toLowerCase();
     qTokens.forEach((token) => {
-      if (corpus.includes(token)) {
-        score += 3;
-      }
+      if (corpus.includes(token)) score += 3;
     });
 
-    if (qLower.includes("checkin") || qLower.includes("check-in") || qLower.includes("kontuar") || qLower.includes("kapan")) {
-      if (item.category === "CHECKIN") score += 8;
+    if (qLower.includes("sıvı") || qLower.includes("sivi") || qLower.includes("100ml") || qLower.includes("şampuan") || qLower.includes("parfüm") || qLower.includes("krem")) {
+      if (item.category === "LIQUIDS") score += 20;
     }
-    if (qLower.includes("koltuk") || qLower.includes("seat") || qLower.includes("seçim")) {
-      if (item.category === "SEAT_TRAP") score += 8;
-    }
-    if (qLower.includes("bagaj") || qLower.includes("kabin") || qLower.includes("ceza") || qLower.includes("limit") || qLower.includes("boyut")) {
-      if (item.category === "BAGGAGE") score += 5;
+    if (qLower.includes("powerbank") || qLower.includes("pil") || qLower.includes("elektronik") || qLower.includes("şarj") || qLower.includes("laptop")) {
+      if (item.category === "ELECTRONICS") score += 20;
     }
 
     return { item, score };
@@ -200,10 +218,7 @@ function getLocalRagFallback(searchQuery: string, searchOp: string): RagResponse
   scored.sort((a, b) => b.score - a.score);
 
   const topItems = scored.filter((s) => s.score > 0).map((s) => s.item);
-  const chunks = topItems.length > 0
-    ? topItems.slice(0, 3)
-    : pool.slice(0, 2);
-
+  const chunks = topItems.length > 0 ? topItems.slice(0, 3) : pool.slice(0, 2);
   const citations = chunks.map((c) => `${c.operator} - ${c.clause_ref}: ${c.title}`);
   
   let answer = `📌 **${chunks[0].title}** (${chunks[0].clause_ref})\n${chunks[0].content}\n\n`;
@@ -242,7 +257,7 @@ export default function RagKnowledgeCard() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: searchQuery, operator: searchOp }),
-        signal: AbortSignal.timeout(6_000), // 6s timeout before falling back
+        signal: AbortSignal.timeout(15_000),
       });
 
       if (!res.ok) {

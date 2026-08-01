@@ -479,6 +479,40 @@ export default function LuggageScanner({
 
   return (
     <div className="w-full space-y-4">
+      {/* Vision AI Referans Nesnesi İpucu Kartı */}
+      <div className="rounded-xl border border-sky-500/20 bg-sky-500/5 p-3.5 space-y-2 text-xs">
+        <div className="flex items-center gap-2 text-sky-400 font-bold">
+          <span>📏</span>
+          <span>Vision AI Doğru Ölçüm İpucu:</span>
+        </div>
+        <p className="text-zinc-300 leading-relaxed">
+          Yapay zekanın santimetre bazında hassas ölçüm yapabilmesi için fotoğraf çekerken bavulunuzun yanına şu <strong className="text-white">3 standart referans eşyadan birini</strong> koyun:
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+          <div className="flex items-center gap-2 rounded-lg bg-slate-900/80 border border-slate-800 p-2 text-zinc-300">
+            <span className="text-base">📄</span>
+            <div>
+              <span className="font-semibold text-white block">A4 Kağıdı</span>
+              <span className="text-[10px] text-zinc-400">21×30 cm standart</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 rounded-lg bg-slate-900/80 border border-slate-800 p-2 text-zinc-300">
+            <span className="text-base">🪑</span>
+            <div>
+              <span className="font-semibold text-white block">Sandalye / Kapı</span>
+              <span className="text-[10px] text-zinc-400">Dikey ölçek referansı</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 rounded-lg bg-slate-900/80 border border-slate-800 p-2 text-zinc-300">
+            <span className="text-base">🎒</span>
+            <div>
+              <span className="font-semibold text-white block">Sırt Çantası</span>
+              <span className="text-[10px] text-zinc-400">Genel kıyaslama nesnesi</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <DropZone
         preview={preview}
         isLoading={scanStatus === "loading"}

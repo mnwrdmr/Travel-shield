@@ -342,8 +342,38 @@ async def _call_openai(
 
 
 # ─────────────────────────────────────────────────────────────
-# İki aşamalı analiz
+# Tek Aşama Hızlı Vision Analiz (Single-stage Unified Vision Prompt)
 # ─────────────────────────────────────────────────────────────
+
+UNIFIED_VISION_PROMPT_TEMPLATE = """
+Görseldeki bagajı ve boyutlarını analiz et.
+
+[GÖREV]
+1. Görselde seyahat bagajı (valiz, el çantası, sırt çantası, kabin çantası) var mı tespit et.
+2. Varsa, görseldeki oranlar ve referans eşyalar (A4 kağıdı, sandalye, kapı, sırt çantası) üzerinden boyutlarını cm olarak tahmin et.
+
+[HEDEF HAVAYOLU LIMITI - {operator}]
+Kabin Limiti: {w} × {h} × {d} cm
+
+Aşağıdaki JSON şemasında yanıt ver:
+{{
+  "is_luggage": true,
+  "luggage_type": "suitcase" / "backpack" / "tote_bag" / "duffle_bag",
+  "reason": "Bagaj türü ve durumu açıklaması",
+  "width_cm": 38.0,
+  "height_cm": 42.0,
+  "depth_cm": 22.0,
+  "confidence": 0.85,
+  "reference_used": "Görseldeki oranlar ve referans eşya"
+}}
+
+Eğer görselde bagaj YOKSA:
+{{
+  "is_luggage": false,
+  "reason": "Görselde bagaj yerine [nesne adı] tespit edildi. Lütfen net bir bavul fotoğrafı yükleyin.",
+  "confidence": 0.9
+}}
+"""
 
 async def _run_two_stage_analysis(
     image_bytes: bytes,
@@ -354,49 +384,50 @@ async def _run_two_stage_analysis(
     gemini_client = _get_gemini_client()
     source        = "demo"
 
-    # ── Aşama 1: Nesne tespiti ────────────────────────────────
-    detection: Optional[dict] = None
+    prompt = UNIFIED_VISION_PROMPT_TEMPLATE.format(
+        operator=operator,
+        w=limits["w"],
+        h=limits["h"],
+        d=limits["d"]
+    )
+
+    data: Optional[dict] = None
 
     if gemini_client:
-        detection = await _call_gemini(gemini_client, image_bytes, mime_type, DETECTION_PROMPT)
-        if detection:
+        data = await _call_gemini(gemini_client, image_bytes, mime_type, prompt)
+        if data:
             source = "gemini"
 
-    if detection is None:
-        detection = await _call_openai(image_bytes, mime_type, DETECTION_PROMPT)
-        if detection:
+    if data is None:
+        data = await _call_openai(image_bytes, mime_type, prompt)
+        if data:
             source = "gpt-4o"
 
-    if detection is None:
-        logger.error("Tüm detection API çağrıları başarısız.")
+    if data is None:
+        logger.error("Tüm Vision API çağrıları başarısız.")
         return (
-            {"is_luggage": False, "reason": "Görsel analiz servisi şu an kullanılamıyor, lütfen birkaç dakika sonra tekrar deneyin.", "detection_confidence": 0.0},
+            {"is_luggage": False, "reason": "Görsel analiz servisi şu an kullanılamıyor, lütfen birkaç dakika sonra tekrar deneyin."},
             {},
             "error",
         )
 
-    if not detection.get("is_luggage", False):
-        return detection, {}, source
+    if not data.get("is_luggage", False):
+        return data, {}, source
 
-    # ── Aşama 2: Boyut tahmini ────────────────────────────────
-    dim_prompt = _build_dimension_prompt(operator, limits)
-    dimension: Optional[dict] = None
+    # Dimension and detection parameters combined
+    detection = {
+        "is_luggage": True,
+        "luggage_type": data.get("luggage_type", "suitcase"),
+        "detection_confidence": data.get("confidence", 0.85),
+    }
 
-    if gemini_client:
-        dimension = await _call_gemini(gemini_client, image_bytes, mime_type, dim_prompt)
-
-    if dimension is None:
-        dimension = await _call_openai(image_bytes, mime_type, dim_prompt)
-
-    if dimension is None:
-        logger.warning("Boyut tahmini başarısız, limit değerleri fallback olarak kullanılıyor.")
-        dimension = {
-            "width_cm":            limits["w"],
-            "height_cm":           limits["h"],
-            "depth_cm":            limits["d"],
-            "dimension_confidence": 0.3,
-            "reference_used":      "Tahmin yapılamadı — havayolu limiti kullanıldı",
-        }
+    dimension = {
+        "width_cm":             data.get("width_cm", limits["w"]),
+        "height_cm":            data.get("height_cm", limits["h"]),
+        "depth_cm":             data.get("depth_cm", limits["d"]),
+        "dimension_confidence": data.get("confidence", 0.85),
+        "reference_used":       data.get("reference_used", "Görsel oransal analiz"),
+    }
 
     return detection, dimension, source
 

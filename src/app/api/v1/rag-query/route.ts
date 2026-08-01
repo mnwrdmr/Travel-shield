@@ -139,6 +139,38 @@ const POLICIES: PolicyChunk[] = [
     clause_ref: "FlixBus Bagaj Şartları Madde 3.1",
     content: "FlixBus biletlerine 1 adet el bagajı (maks 42x30x18 cm, 7 kg) ve 1 adet kargo bagajı (maks 80x50x30 cm, 20 kg) dahildir. Ek kargo bagajı bilet alma esnasında €3-€5 karşılığında eklenebilir.",
   },
+  {
+    id: "GENERAL_LIQUIDS_01",
+    operator: "GENEL",
+    category: "LIQUIDS",
+    title: "Kabin Bagajında Sıvı Kısıtlamaları ve Kuralları (100 ml Sınırı)",
+    clause_ref: "ICAO / SHGM Güvenlik Talimatı Madde 12",
+    content: "Kabin bagajında taşınacak tüm sıvılar, jeller ve aerosoller en fazla 100 ml (100 gr) kapasiteli bireysel kaplarda olmalıdır. Bu kapların tamamı, toplam hacmi 1 litreyi geçmeyen (yaklaşık 20x20 cm boyutlarında) şeffaf ve kilitli bir poşet içinde güvenlik kontrolünden geçirilmelidir. 100 ml'yi aşan sıvılar kargo bagajına verilmelidir; aksi takdirde güvenlikte el konulur ve imha edilir. Bebek maması ve ilaçlar muaf tutulabilir.",
+  },
+  {
+    id: "GENERAL_ELECTRONICS_01",
+    operator: "GENEL",
+    category: "ELECTRONICS",
+    title: "Lityum Piller, Powerbank ve Elektronik Cihaz Kuralları",
+    clause_ref: "IATA Tehlikeli Maddeler Düzenlemesi DGR 2.3",
+    content: "Taşınabilir şarj cihazları (Powerbank), yedek lityum iyon piller ve e-sigaralar KESİNLİKLE uçak kargo bagajına (uçak altına) verilemez; yalnızca el/kabin bagajında taşınmalıdır. Maksimum 100 Wh (veya onaylı ise 160 Wh) kapasiteye izin verilir. Dizüstü bilgisayar ve tabletler güvenlik aramasında poşet ve çantadan çıkarılarak ayrı tepside taranmalıdır.",
+  },
+  {
+    id: "GENERAL_REFUND_01",
+    operator: "GENEL",
+    category: "REFUND",
+    title: "Uçuş İptali, Rötar ve Yolcu Hakları (SHY-PASS & AB 261/2004)",
+    clause_ref: "SHY-PASS Yönetmeliği / EU Regulation 261/2004",
+    content: "3 saati aşan rötarlarda ve son 14 günde bildirilen iptallerde yolcular mesafeye göre €250 - €600 (veya iç hatlarda ₺100-₺600) tazminat hakkına sahiptir. Ayrıca 2 saat üzeri beklemelerde ücretsiz yiyecek/içecek ikramı ve otel konaklaması sağlanması yasal zorunluluktur.",
+  },
+  {
+    id: "GENERAL_PETS_01",
+    operator: "GENEL",
+    category: "PETS",
+    title: "Uçakta Evcil Hayvan Taşıma Esasları",
+    clause_ref: "SHGM Evcil Hayvan Taşıma Kuralları",
+    content: "Kabin içinde kedi, köpek ve küçük ötücü kuş taşınabilir. Taşıma çantası dahil toplam ağırlık 8 kg'ı geçmemeli ve çanta boyutları maksimum 55x40x23 cm (veya 40x30x20 cm) olmalıdır. Aşı karnesi ve mikroçip zorunludur. Uçak altına verilecek evcil hayvanlar için havalandırmalı özel kafes şarttır.",
+  },
 ];
 
 const OPERATOR_ALIASES: Record<string, string> = {
@@ -180,10 +212,9 @@ export async function POST(req: Request) {
     // Etkin operatör: önce sorgu metninde geçen havayolu, yoksa dropdown seçimi.
     const opClean = detectOperatorInQuery(qRaw) || String(operator || "").toUpperCase();
 
-    // Operatör biliniyorsa retrieval'ı yalnızca o havayolunun maddeleriyle sınırla;
-    // aksi halde başka havayollarının kuralları contexte ve atıflara sızıyor.
+    // Operatör biliniyorsa o havayolunun maddeleri + GENEL mevzuat maddelerini al
     const searchPool = opClean
-      ? POLICIES.filter(i => i.operator.toUpperCase() === opClean)
+      ? POLICIES.filter(i => i.operator.toUpperCase() === opClean || i.operator.toUpperCase() === "GENEL")
       : POLICIES;
     const pool = searchPool.length > 0 ? searchPool : POLICIES;
 
@@ -200,6 +231,18 @@ export async function POST(req: Request) {
         if (corpus.includes(token)) score += 4;
       });
 
+      if (qLower.includes("sıvı") || qLower.includes("sivi") || qLower.includes("100ml") || qLower.includes("şampuan") || qLower.includes("parfüm") || qLower.includes("krem")) {
+        if (item.category === "LIQUIDS") score += 20;
+      }
+      if (qLower.includes("powerbank") || qLower.includes("pil") || qLower.includes("elektronik") || qLower.includes("şarj") || qLower.includes("laptop") || qLower.includes("bilgisayar")) {
+        if (item.category === "ELECTRONICS") score += 20;
+      }
+      if (qLower.includes("iptal") || qLower.includes("rötar") || qLower.includes("rotar") || qLower.includes("tazminat") || qLower.includes("iade") || qLower.includes("hak")) {
+        if (item.category === "REFUND") score += 20;
+      }
+      if (qLower.includes("kedi") || qLower.includes("köpek") || qLower.includes("evcil") || qLower.includes("hayvan") || qLower.includes("pet")) {
+        if (item.category === "PETS") score += 20;
+      }
       if (qLower.includes("checkin") || qLower.includes("check-in") || qLower.includes("kontuar") || qLower.includes("kapan")) {
         if (item.category === "CHECKIN") score += 10;
       }
@@ -236,9 +279,9 @@ ${contextStr}
 ${qRaw} (Operatör: ${opClean || "Genel"})
 
 [TALİMATLAR]
-1. Yanıtında doğrudan verilen CONTEXT maddelerine atıfta bulun (Örn: 'THY Genel Şartlar Madde 4.2.1 uyarınca...').
-2. Varsa kapı cezası (gate fee) ve bagaj limitlerini net rakamlarla belirt.
-3. Yanıtı Türkçe, kısa, anlaşılır ve madde işaretli olarak formatla.
+1. Yanıtında verilen CONTEXT maddelerine atıfta bulun (Örn: 'SHGM Güvenlik Talimatı Madde 12 uyarınca...').
+2. Varsa limit, ceza veya sıvı ölçülerini net rakamlarla belirt.
+3. Yanıtı Türkçe, anlaşılır, derli toplu ve TAM BİR CÜMLE İLE BİTİR. Asla cümlenin veya cevabın ortasında kesme.
 `;
 
       // Model konfigürasyonu env vars üzerinden okunur (sabit model ismi yazılmaz)
@@ -265,7 +308,7 @@ ${qRaw} (Operatör: ${opClean || "Genel"})
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                   contents: [{ parts: [{ text: promptStr }] }],
-                  generationConfig: { temperature: 0.2, maxOutputTokens: 600 },
+                  generationConfig: { temperature: 0.2, maxOutputTokens: 1800 },
                 }),
                 signal: AbortSignal.timeout(12_000),
               }

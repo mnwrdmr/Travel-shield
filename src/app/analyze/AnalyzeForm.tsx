@@ -176,6 +176,119 @@ function TypedLine({ text, done }: { text: string; done: boolean }) {
   );
 }
 
+// ── 33 Çok Uçulan Şehir ──────────────────────────────────────
+const POPULAR_CITIES = [
+  { code: "IST", name: "İstanbul (IST)", country: "Türkiye", flag: "🇹🇷" },
+  { code: "SAW", name: "İstanbul (SAW)", country: "Türkiye", flag: "🇹🇷" },
+  { code: "ESB", name: "Ankara (ESB)", country: "Türkiye", flag: "🇹🇷" },
+  { code: "ADB", name: "İzmir (ADB)", country: "Türkiye", flag: "🇹🇷" },
+  { code: "AYT", name: "Antalya (AYT)", country: "Türkiye", flag: "🇹🇷" },
+  { code: "BJV", name: "Bodrum (BJV)", country: "Türkiye", flag: "🇹🇷" },
+  { code: "DLM", name: "Dalaman (DLM)", country: "Türkiye", flag: "🇹🇷" },
+  { code: "TZX", name: "Trabzon (TZX)", country: "Türkiye", flag: "🇹🇷" },
+  { code: "ADA", name: "Adana (ADA)", country: "Türkiye", flag: "🇹🇷" },
+  { code: "GZT", name: "Gaziantep (GZT)", country: "Türkiye", flag: "🇹🇷" },
+  { code: "LHR", name: "Londra (LHR)", country: "İngiltere", flag: "🇬🇧" },
+  { code: "STN", name: "Londra (STN)", country: "İngiltere", flag: "🇬🇧" },
+  { code: "CDG", name: "Paris (CDG)", country: "Fransa", flag: "🇫🇷" },
+  { code: "AMS", name: "Amsterdam (AMS)", country: "Hollanda", flag: "🇳🇱" },
+  { code: "BER", name: "Berlin (BER)", country: "Almanya", flag: "🇩🇪" },
+  { code: "FRA", name: "Frankfurt (FRA)", country: "Almanya", flag: "🇩🇪" },
+  { code: "MUC", name: "Münih (MUC)", country: "Almanya", flag: "🇩🇪" },
+  { code: "FCO", name: "Roma (FCO)", country: "İtalya", flag: "🇮🇹" },
+  { code: "MXP", name: "Milano (MXP)", country: "İtalya", flag: "🇮🇹" },
+  { code: "BCN", name: "Barselona (BCN)", country: "İspanya", flag: "🇪🇸" },
+  { code: "MAD", name: "Madrid (MAD)", country: "İspanya", flag: "🇪🇸" },
+  { code: "VIE", name: "Viyana (VIE)", country: "Avusturya", flag: "🇦🇹" },
+  { code: "ZRH", name: "Zürih (ZRH)", country: "İsviçre", flag: "🇨🇭" },
+  { code: "BRU", name: "Brüksel (BRU)", country: "Belçika", flag: "🇧🇪" },
+  { code: "ATH", name: "Atina (ATH)", country: "Yunanistan", flag: "🇬🇷" },
+  { code: "PRG", name: "Prag (PRG)", country: "Çekya", flag: "🇨🇿" },
+  { code: "WAW", name: "Varşova (WAW)", country: "Polonya", flag: "🇵🇱" },
+  { code: "BUD", name: "Budapeşte (BUD)", country: "Macaristan", flag: "🇭🇺" },
+  { code: "DXB", name: "Dubai (DXB)", country: "BAE", flag: "🇦🇪" },
+  { code: "JFK", name: "New York (JFK)", country: "ABD", flag: "🇺🇸" },
+  { code: "GYD", name: "Bakü (GYD)", country: "Azerbaycan", flag: "🇦🇿" },
+  { code: "EBL", name: "Erbil (EBL)", country: "Irak", flag: "🇮🇶" },
+  { code: "ECN", name: "Lefkoşa (ECN)", country: "KKTC", flag: "🇹🇷" },
+];
+
+function CitySelector({
+  id,
+  value,
+  onChange,
+  placeholder,
+}: {
+  id: string;
+  value: string;
+  onChange: (val: string) => void;
+  placeholder: string;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [filterText, setFilterText] = useState("");
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const filtered = POPULAR_CITIES.filter((c) =>
+    (c.name + " " + c.code + " " + c.country)
+      .toLowerCase()
+      .includes(filterText.toLowerCase())
+  );
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div ref={containerRef} className="relative">
+      <input
+        id={id}
+        value={value}
+        onChange={(e) => {
+          onChange(e.target.value);
+          setFilterText(e.target.value);
+          setIsOpen(true);
+        }}
+        onFocus={() => setIsOpen(true)}
+        placeholder={placeholder}
+        className="w-full rounded-xl border border-zinc-800 bg-zinc-950/80 px-3 py-2 text-[13px] font-mono text-zinc-100 placeholder:text-zinc-500 focus:border-[var(--color-primary)] focus:outline-none"
+      />
+      {isOpen && (
+        <div className="absolute left-0 top-full z-50 mt-1 max-h-52 w-full overflow-y-auto rounded-xl border border-zinc-700 bg-zinc-900 shadow-2xl backdrop-blur-md">
+          {filtered.length > 0 ? (
+            filtered.map((city) => (
+              <button
+                key={city.code}
+                type="button"
+                onClick={() => {
+                  onChange(city.name);
+                  setIsOpen(false);
+                }}
+                className="flex w-full items-center justify-between px-3 py-2 text-left text-xs text-zinc-200 transition-colors hover:bg-white/10"
+              >
+                <div className="flex items-center gap-2">
+                  <span>{city.flag}</span>
+                  <span className="font-semibold text-zinc-100">{city.name}</span>
+                </div>
+                <span className="font-mono text-[10px] text-zinc-500">{city.country}</span>
+              </button>
+            ))
+          ) : (
+            <div className="p-3 text-center text-xs text-zinc-500">
+              Şehir bulunamadı — özel isim yazabilirsiniz
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Wizard adım göstergesi ────────────────────────────────
 function StepIndicator({ currentStep }: { currentStep: WizardStep }) {
   const steps = [
@@ -422,8 +535,11 @@ export default function AnalyzeForm() {
                   <label htmlFor="origin" className="block">
                     <FieldLabel><PlaneTakeoff size={11} className="mr-1 inline" aria-hidden />Kalkış</FieldLabel>
                   </label>
-                  <input id="origin" value={origin} onChange={(e) => setOrigin(e.target.value)}
-                    placeholder="örn. İstanbul" className={`${fieldBase} font-mono text-[13px]`}
+                  <CitySelector
+                    id="origin"
+                    value={origin}
+                    onChange={setOrigin}
+                    placeholder="Şehir arayın (örn. İstanbul IST)"
                   />
                 </div>
 
@@ -431,8 +547,11 @@ export default function AnalyzeForm() {
                   <label htmlFor="destination" className="block">
                     <FieldLabel><MapPin size={11} className="mr-1 inline" aria-hidden />Varış</FieldLabel>
                   </label>
-                  <input id="destination" value={destination} onChange={(e) => setDestination(e.target.value)}
-                    placeholder="örn. Barselona" className={`${fieldBase} font-mono text-[13px]`}
+                  <CitySelector
+                    id="destination"
+                    value={destination}
+                    onChange={setDestination}
+                    placeholder="Şehir arayın (örn. Barselona BCN)"
                   />
                 </div>
 
