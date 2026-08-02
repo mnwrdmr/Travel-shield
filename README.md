@@ -296,7 +296,8 @@ Süreç içerisinde git merge çakışmalarını (conflict) sıfıra indirmek ad
 ---
 ### B. Daily Scrum Notları- Sprint 3:
 Daily Scrum toplantılarında daha hızlı aksiyon alınması için WhatApp üzerinden ilerlenmiş, ekip üyelerinin müsait olduğu günlerde Slack üzerinden toplantı yapılmasına karar verilmiştir. Daily Scrum toplantısı örneği jpeg veya word olarak Readme'de tarafımızdan paylaşılmaktadır:
-[DailyScrumMeetingNotesSprint3.docx](ProjectManagment/Sprint3Documents/DailyScrumMeetingNotesSprint3.docx)
+[DailyScrumMeetingNotesSprint3.docx](ProjectManagment/Sprint3Documents/DailyScrumMeetingNotesSprint3.docx)[Uploading DailyScrumMeetingNotesSprint3.docx…]()
+
 
 
 ### C. Sprint 3 Board Updates: Ekran görüntüleri
@@ -308,6 +309,20 @@ Daily Scrum toplantılarında daha hızlı aksiyon alınması için WhatApp üze
 ![backlog_6.png](ProjectManagment/Sprint3Documents/backlog_6.png)
 
 ### D. Ürün Durumu: Ekran görüntüleri
+
+<img width="3024" height="13819" alt="product_1_ss" src="https://github.com/user-attachments/assets/29270336-ef5b-4e4f-bdac-314af9ad2c13" />
+<img width="1512" height="2114" alt="product_2_ss" src="https://github.com/user-attachments/assets/82cc1402-e757-48be-ac9f-944c07ac9743" />
+<img width="1509" height="606" alt="product_3_ss" src="https://github.com/user-attachments/assets/e6898f37-1760-4f99-85a5-8619bf9491e6" />
+<img width="348" height="365" alt="product_5_ss" src="https://github.com/user-attachments/assets/1d572ad5-7d4d-432b-b2fe-8e6500c5bb01" />
+<img width="1512" height="665" alt="product_4_ss" src="https://github.com/user-attachments/assets/03807267-a01a-4505-9e5a-e866078659c6" />
+<img width="348" height="387" alt="product_6_ss" src="https://github.com/user-attachments/assets/ea2277ca-afcd-4102-b098-912d212b3b5f" />
+<img width="369" height="387" alt="product_7_ss" src="https://github.com/user-attachments/assets/137496f9-683f-4a88-bb6a-695417a901c6" />
+<img width="1512" height="1229" alt="product_10_ss" src="https://github.com/user-attachments/assets/f9cb6eff-f12a-4375-9d60-324c5048552c" />
+<img width="1512" height="1768" alt="product_9_ss" src="https://github.com/user-attachments/assets/7348e469-764b-49ab-a679-0bc19ddfe5f3" />
+<img width="3024" height="6375" alt="product_8_ss" src="https://github.com/user-attachments/assets/59af1ca6-e2e8-48d7-8a31-258aaa22f725" />
+<img width="1512" height="3024" alt="product_11_ss" src="https://github.com/user-attachments/assets/306bea81-c555-4cf5-b17e-0074583a9602" />
+<img width="3024" height="3665" alt="prosuct_12_ss" src="https://github.com/user-attachments/assets/9b1f5853-a295-4a62-8fe8-3cf3adaa1f2d" />
+<img width="3022" height="4345" alt="product_13_ss" src="https://github.com/user-attachments/assets/7404c01e-d07d-4b0f-bd36-ffee02753777" />
 
 
 
