@@ -16,7 +16,21 @@ Umut Can Karaman:  Team Member/Developer
 
 ## Ürün Açıklaması
 
-- Düşük maliyetli havayolları ve bölgesel tren operatörlerinin (Ryanair, Trenitalia vb.) karmaşık kurallar ve dijital tuzaklar üzerinden kestiği ağır operasyonel cezalara karşı bütçeli gezginleri koruyan yapay zeka ajanlı bir seyahat asistanı.
+- Düşük maliyetli havayolları ve bölgesel tren operatörlerinin (Ryanair, Wizz Air, Pegasus, Trenitalia vb.) karmaşık kurallar ve dijital tuzaklar üzerinden kestiği ağır operasyonel cezalara karşı bütçeli gezginleri koruyan yapay zeka ajanlı bir seyahat asistanı.
+
+## 🛠️ Teknoloji Yığını & Mimari (Tech Stack)
+
+| Katman | Teknoloji / Kütüphane | Kullanım Amacı & Mimari Detay |
+| --- | --- | --- |
+| **Ön Yüz (Frontend)** | **Next.js 16.2** (React 19, TypeScript) | SSR/CSR hibrit mimari, Turbopack, Dark-mode UI |
+| **Stil & Tasarım** | **Tailwind CSS v4**, Lucide React | Cam efekti (Glassmorphism), dinamik mikro-animasyonlar |
+| **Arka Yüz (Backend)**| **Python FastAPI** (Uvicorn) | Yüksek performanslı asenkron microservice altyapısı |
+| **Yapay Zeka (LLM)** | **Google Gemini 3.6 Flash** | RAG mevzuat analizi ve çok modlu bagaj görsel algılama |
+| **Görsel Algılama** | **Multi-Modal Vision AI** | Tek aşamalı (Single-stage) nesne tespiti ve cm bazında boyut hesabı |
+| **Hukuk & Mevzuat** | **Dynamic RAG Engine** | 20+ indekslenmiş mevzuat maddesi (ICAO, SHGM, AB 261/2004) |
+| **Kesintisiz Çalışma**| **7 Katmanlı Fallback Zinciri**| Gemini 3.6 ➔ 3.5 ➔ Flash-Latest ➔ GPT-4o-mini ➔ Yerel Motor |
+| **Veri & Durum** | **TravelContext Engine** | `useSyncExternalStore` ile SSR/CSR uyumlu `localStorage` kalıcılığı |
+| **Entegrasyon** | **Telegram Bot Entegrasyonu** | `@TravelShieldBot` üzerinden anlık bilet ve bagaj sorgulama |
 
 ## Ürün Özellikleri
 
@@ -313,7 +327,7 @@ Sprint 3 sonunda elde edilen ürün; kullanıcı girdilerine dinamik olarak tepk
 
 Neler Tamamlandı?: 
 * Bilet ve bagaj verilerini tek akışta birleştiren Wizard mimarisi devreye alındı.
-* Hardcoded chatbot yapısı, Gemini 2.5 tabanlı RAG API'ye bağlandı.
+* Chatbot yapısı, Google Gemini 3.6 Flash tabanlı RAG ve Single-Stage Vision AI API'sine bağlandı.
 * Olası ağ kopmalarında canlı sunumu korumak adına Demo Safety Fallback Guard eklendi.
 * Çift backend ve çakışan kural veritabanı temizlenerek kod mimarisi sadeleştirildi.
 
