@@ -296,7 +296,7 @@ Süreç içerisinde git merge çakışmalarını (conflict) sıfıra indirmek ad
 ---
 ### B. Daily Scrum Notları- Sprint 3:
 Daily Scrum toplantılarında daha hızlı aksiyon alınması için WhatApp üzerinden ilerlenmiş, ekip üyelerinin müsait olduğu günlerde Slack üzerinden toplantı yapılmasına karar verilmiştir. Daily Scrum toplantısı örneği jpeg veya word olarak Readme'de tarafımızdan paylaşılmaktadır:
-[DailyScrumMeetingNotesSprint3.docx](ProjectManagment/Sprint3Documents/DailyScrumMeetingNotesSprint3.docx)[Uploading DailyScrumMeetingNotesSprint3.docx…]()
+[DailyScrumMeetingNotesSprint3.docx](https://github.com/user-attachments/files/30634751/DailyScrumMeetingNotesSprint3.docx)
 
 
 
